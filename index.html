@@ -1,0 +1,2158 @@
+<!DOCTYPE html>
+<html lang="en-GB" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Welcome - Debugging Lab</title>
+<style>
+:root{
+  --bg:#1f1f1f; --side-bg:#181818; --bar-bg:#181818; --panel-bg:#181818; --tab-bg:#181818; --tab-active:#1f1f1f;
+  --border:#2b2b2b; --border-strong:#707070; --fg:#cccccc; --fg-strong:#ffffff; --muted:#9d9d9d;
+  --accent:#4daafc; --btn-bg:#0067c0; --btn-fg:#ffffff; --btn-hover:#0a7ad6; --btn2-bg:#313131; --btn2-fg:#e0e0e0;
+  --input-bg:#313131; --hover:#2a2d2e; --sel:#37373d; --focus:#4daafc;
+  --ln:#8b949e; --cur-bg:#2e2e0e; --cur-border:#d7ba00; --frame-bg:#1c3320; --pick-bg:#04395e; --cursor-bg:#262626;
+  --bp:#e51400; --status-bg:#006fbf; --status-debug:#b5501f; --status-fg:#ffffff;
+  --ok:#89d185; --ok-bg:#16301a; --err:#f48771; --err-bg:#3a1c1c; --warn:#d9b100; --info-bg:#11283a; --chg-bg:#2e2e0e; --add-bg:#16301a;
+  --tok-kw:#569cd6; --tok-ctl:#c586c0; --tok-type:#4ec9b0; --tok-str:#ce9178; --tok-num:#b5cea8; --tok-com:#7daf6b; --tok-pp:#c586c0; --tok-fn:#dcdcaa; --tok-var:#9cdcfe;
+  --d-blue:#75beff; --d-green:#89d185; --d-red:#f48771; --tip-bg:#2b2b2b; --tip-fg:#e6e6e6; --shadow:rgba(0,0,0,.5);
+}
+[data-theme="light"]{
+  --bg:#ffffff; --side-bg:#f8f8f8; --bar-bg:#f8f8f8; --panel-bg:#f8f8f8; --tab-bg:#f8f8f8; --tab-active:#ffffff;
+  --border:#e5e5e5; --border-strong:#8a8a8a; --fg:#3b3b3b; --fg-strong:#000000; --muted:#5f5f5f;
+  --accent:#005fb8; --btn-bg:#005fb8; --btn-fg:#ffffff; --btn-hover:#004f9a; --btn2-bg:#e5e5e5; --btn2-fg:#2b2b2b;
+  --input-bg:#ffffff; --hover:#ececec; --sel:#e4e6f1; --focus:#005fb8;
+  --ln:#6a6f76; --cur-bg:#fff9c2; --cur-border:#8a6d00; --frame-bg:#dff3df; --pick-bg:#d6e9ff; --cursor-bg:#f3f3f3;
+  --bp:#e51400; --status-bg:#005fb8; --status-debug:#b5501f; --status-fg:#ffffff;
+  --ok:#1b6e1b; --ok-bg:#e6f4e6; --err:#b01011; --err-bg:#fdecec; --warn:#7a5c00; --info-bg:#e8f1fb; --chg-bg:#fff3b0; --add-bg:#e2f5e2;
+  --tok-kw:#0000ff; --tok-ctl:#af00db; --tok-type:#1e6a82; --tok-str:#a31515; --tok-num:#076e48; --tok-com:#006b00; --tok-pp:#af00db; --tok-fn:#795e26; --tok-var:#001080;
+  --d-blue:#005fb8; --d-green:#2e7d2a; --d-red:#a1260d; --tip-bg:#f3f3f3; --tip-fg:#2b2b2b; --shadow:rgba(0,0,0,.2);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font:13px/1.5 Consolas,"Cascadia Code","Courier New",monospace;overflow:hidden}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+button:disabled{cursor:not-allowed;opacity:.45}
+:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+#app{display:flex;flex-direction:column;height:100vh}
+
+/* Title bar */
+.titlebar{display:flex;align-items:center;height:34px;background:var(--bar-bg);border-bottom:1px solid var(--border);flex:none;padding-left:10px;gap:10px}
+.titlebar .logo{color:var(--accent);font-weight:bold}
+.titlebar .menu{display:flex;gap:12px;color:var(--muted)}
+.titlebar .title{flex:1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--fg)}
+.titlebar .tbtn{padding:3px 8px;border:1px solid var(--border-strong);border-radius:4px}
+.titlebar .tbtn:hover{background:var(--hover)}
+.winctl{display:flex}
+.winctl span{width:42px;height:34px;display:grid;place-items:center;color:var(--muted)}
+
+/* Main layout */
+.main{flex:1;display:flex;min-height:0;position:relative}
+.activity{width:48px;flex:none;background:var(--bar-bg);border-right:1px solid var(--border);display:flex;flex-direction:column}
+.activity button{width:48px;height:48px;display:grid;place-items:center;color:var(--muted);border-left:2px solid transparent}
+.activity button:hover{color:var(--fg-strong)}
+.activity button[aria-pressed="true"]{color:var(--fg-strong);border-left-color:var(--accent)}
+.activity svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.sidebar{width:270px;flex:none;background:var(--side-bg);border-right:1px solid var(--border);overflow:auto}
+.sidebar.closed{display:none}
+.sidebar h2{font-size:11px;font-weight:normal;text-transform:uppercase;letter-spacing:.5px;margin:0;padding:10px 14px;color:var(--fg)}
+.sidebar details{border-top:1px solid var(--border)}
+.sidebar summary{font-size:11px;font-weight:bold;text-transform:uppercase;padding:4px 8px;cursor:pointer;color:var(--fg)}
+.sidebar .sec{padding:2px 0 8px}
+.sidebar .empty{color:var(--muted);padding:2px 14px;margin:0}
+.sidebar ul{list-style:none;margin:0;padding:0}
+.startrow{padding:0 14px 10px}
+.btn{background:var(--btn-bg);color:var(--btn-fg);padding:5px 12px;border-radius:3px;display:inline-block}
+.btn:hover:not(:disabled){background:var(--btn-hover)}
+.btn.sec2{background:var(--btn2-bg);color:var(--btn2-fg)}
+.btn.sec2:hover:not(:disabled){background:var(--hover)}
+.btn.wide{width:100%;text-align:center}
+.scope{padding:1px 14px;font-weight:bold;color:var(--fg)}
+.var{padding:1px 14px 1px 24px;word-break:break-word}
+.var.sub{padding-left:38px}
+.var.chg{background:var(--chg-bg)}
+.vv{white-space:pre-wrap} .vn{color:var(--tok-var)} .vv.t-int,.vv.t-double{color:var(--tok-num)} .vv.t-string{color:var(--tok-str)} .vv.t-bool{color:var(--tok-kw)} .vv.t-raw{color:var(--fg)} .vv.t-float{color:var(--tok-num)} .vv.t-null{color:var(--tok-kw)} .vv.t-err{color:var(--err)}
+.rowline{display:flex;align-items:center;gap:6px;padding:1px 8px 1px 14px}
+.rowline .grow{flex:1;min-width:0;word-break:break-word}
+.xbtn{width:20px;height:20px;border-radius:3px;color:var(--muted);flex:none}
+.xbtn:hover{background:var(--hover);color:var(--fg-strong)}
+.watchform{display:flex;gap:4px;padding:4px 14px}
+input[type=text],input[type=number],input[type=search],textarea{background:var(--input-bg);border:1px solid var(--border-strong);border-radius:3px;padding:3px 6px;width:100%;color:var(--fg)}
+.frame{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:2px 14px 2px 24px}
+.frame:hover{background:var(--hover)} .frame[aria-current="true"]{background:var(--sel);color:var(--fg-strong)}
+.frame small{color:var(--muted);font-size:12px}
+.frame[aria-current="true"] small{color:inherit}
+.bpdot{width:10px;height:10px;border-radius:50%;background:var(--bp);flex:none}
+.files button{display:flex;gap:6px;width:100%;text-align:left;padding:3px 14px 3px 22px}
+.files button:hover{background:var(--hover)} .files button[aria-current="true"]{background:var(--sel);color:var(--fg-strong)}
+.files .tick{color:var(--ok);margin-left:auto} .files .ic{color:var(--tok-kw);flex:none}
+.pbar{height:8px;background:var(--input-bg);border:1px solid var(--border-strong);border-radius:4px;overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--accent)}
+.pwrap{padding:10px 14px}
+.extitem{padding:8px 14px;border-top:1px solid var(--border)} .extitem b{color:var(--fg-strong)} .extitem p{margin:2px 0 0;color:var(--muted)}
+
+.work{flex:1;display:flex;min-width:0}
+.centre{flex:1;display:flex;flex-direction:column;min-width:0}
+.tabrow{display:flex;flex-wrap:wrap;align-items:center;background:var(--tab-bg);border-bottom:1px solid var(--border);flex:none}
+.tabs{display:flex;overflow-x:auto;flex:1;min-width:0}
+.tabs button{padding:8px 14px;border-right:1px solid var(--border);color:var(--muted);white-space:nowrap;border-top:2px solid transparent}
+.tabs button[aria-selected="true"]{background:var(--tab-active);color:var(--fg-strong);border-top-color:var(--accent)}
+.tabs button:hover{color:var(--fg-strong)}
+.dbgbar{display:flex;align-items:center;gap:2px;padding:3px 8px}
+.dbgbar button{width:28px;height:26px;display:grid;place-items:center;border-radius:4px}
+.dbgbar button:hover:not(:disabled){background:var(--hover)}
+.dbgbar svg{width:16px;height:16px;fill:currentColor}
+.dbgbar .runbtn{width:auto;padding:0 10px;color:var(--d-green);gap:6px;display:flex;font-weight:bold}
+.dbgbar .sep{width:1px;height:18px;background:var(--border-strong);margin:0 4px}
+.c-blue{color:var(--d-blue)} .c-green{color:var(--d-green)} .c-red{color:var(--d-red)}
+[data-tip]{position:relative}
+[data-tip]:hover::after,[data-tip]:focus-visible::after{content:attr(data-tip);position:absolute;top:calc(100% + 6px);right:0;white-space:nowrap;background:var(--tip-bg);color:var(--tip-fg);border:1px solid var(--border-strong);padding:2px 8px;font-size:12px;font-weight:normal;z-index:60;border-radius:3px;box-shadow:0 2px 8px var(--shadow)}
+.activity [data-tip]:hover::after,.activity [data-tip]:focus-visible::after{top:12px;left:52px;right:auto}
+
+.edwrap{flex:1;min-height:0;position:relative;background:var(--bg)}
+#editor,#doc{position:absolute;inset:0;overflow:auto}
+#code{min-width:max-content;padding:6px 0 30px}
+.row{display:flex;align-items:stretch;line-height:20px;border:1px solid transparent;border-width:1px 0;cursor:text}
+.row .gut{width:24px;flex:none;display:grid;place-items:center;position:relative}
+.row .gut .dot{width:11px;height:11px;border-radius:50%;background:transparent}
+.row .gut:hover .dot{background:var(--bp);opacity:.45}
+.row .gut[aria-pressed="true"] .dot{background:var(--bp);opacity:1}
+.row .ln{width:34px;flex:none;text-align:right;color:var(--ln);padding-right:14px;box-sizing:content-box;user-select:none}
+.row .src{flex:1;white-space:pre;font:inherit;padding-right:24px;color:var(--fg)}
+.row.cursor{background:var(--cursor-bg)} .row.cursor .ln{color:var(--fg-strong)}
+.row.pick{background:var(--pick-bg);border-color:var(--accent)}
+.row.frm{background:var(--frame-bg)}
+.row.added{background:var(--add-bg)} .row.added .ln{color:var(--fg)}
+.row.cur{background:var(--cur-bg);border-color:var(--cur-border)} .row.cur .ln{color:var(--fg-strong)}
+.row.cur .gut::after{content:"";position:absolute;left:5px;top:4px;width:14px;height:11px;background:var(--cur-border);clip-path:polygon(0 25%,55% 25%,55% 0,100% 50%,55% 100%,55% 75%,0 75%)}
+.row.haserr .src{text-decoration:underline wavy var(--err);text-underline-offset:3px}
+.row.found{box-shadow:inset 3px 0 0 var(--ok)}
+.k{color:var(--tok-kw)} .c{color:var(--tok-ctl)} .t{color:var(--tok-type)} .s{color:var(--tok-str)} .n{color:var(--tok-num)} .m{color:var(--tok-com)} .p{color:var(--tok-pp)} .f{color:var(--tok-fn)} .v{color:var(--tok-var)}
+
+#doc{padding:22px 30px 50px}
+.doc{max-width:860px;font-size:13.5px;line-height:1.65}
+.doc h1{font-size:24px;font-weight:normal;color:var(--fg-strong);margin:0 0 4px}
+.doc h2{font-size:17px;color:var(--fg-strong);margin:26px 0 8px;border-bottom:1px solid var(--border);padding-bottom:4px}
+.doc h3{font-size:14px;color:var(--fg-strong);margin:16px 0 4px}
+.doc .lead{color:var(--muted);margin-top:0}
+.doc table{border-collapse:collapse;width:100%;margin:8px 0}
+.doc th,.doc td{border:1px solid var(--border);padding:6px 10px;text-align:left;vertical-align:top}
+.doc th{background:var(--side-bg);color:var(--fg-strong)}
+.doc td svg{width:16px;height:16px;fill:currentColor;vertical-align:middle}
+.doc pre{background:var(--side-bg);border:1px solid var(--border);padding:10px 12px;overflow:auto;border-radius:4px;color:var(--fg)}
+.doc code,.guide code{color:var(--tok-str)}
+kbd{border:1px solid var(--border-strong);border-bottom-width:2px;border-radius:3px;padding:0 5px;background:var(--side-bg);color:var(--fg-strong);font:inherit;white-space:nowrap}
+.doc .card{background:var(--info-bg);border-left:3px solid var(--accent);padding:10px 14px;margin:12px 0;color:var(--fg)}
+.exlist{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+.exlist button{width:100%;text-align:left;border:1px solid var(--border-strong);border-radius:4px;padding:8px 10px;background:var(--side-bg)}
+.exlist button:hover{background:var(--hover)} .exlist small{display:block;color:var(--muted)} .exlist .tick{color:var(--ok);float:right}
+.big{font-size:30px;color:var(--fg-strong)}
+
+/* Bottom panel */
+.panel{height:210px;flex:none;border-top:1px solid var(--border);background:var(--panel-bg);display:flex;flex-direction:column}
+.ptabs{display:flex;gap:4px;padding:0 10px;flex:none;overflow-x:auto}
+.ptabs button{padding:6px 8px;font-size:11px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid transparent;white-space:nowrap}
+.ptabs button[aria-selected="true"]{color:var(--fg-strong);border-bottom-color:var(--accent)}
+.badge{background:var(--btn-bg);color:var(--btn-fg);border-radius:8px;padding:0 6px;margin-left:4px}
+#pbody{flex:1;overflow:auto;padding:4px 14px 10px;white-space:pre-wrap;word-break:break-word}
+#pbody .cmd{color:var(--fg-strong)} #pbody .err{color:var(--err)} #pbody .note{color:var(--muted)} #pbody .info{color:var(--accent)} #pbody .out{color:var(--fg)} #pbody .good{color:var(--ok)}
+.prob{display:flex;gap:8px;width:100%;text-align:left;padding:3px 4px;white-space:normal}
+.prob:hover{background:var(--hover)} .prob .sev{color:var(--err);flex:none} .prob small{color:var(--muted)}
+
+/* Lab guide */
+.guide{width:370px;flex:none;border-left:1px solid var(--border);background:var(--side-bg);overflow:auto;padding:12px 16px 30px;font-size:13px}
+.guide h2{font-size:15px;color:var(--fg-strong);margin:10px 0 8px}
+.guide h3{font-size:13px;color:var(--fg-strong);margin:16px 0 4px;text-transform:uppercase;letter-spacing:.4px}
+.guide p{margin:6px 0}
+.gmeta{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-bottom:4px}
+.stepper{list-style:none;display:flex;flex-wrap:wrap;gap:4px;padding:0;margin:0 0 6px;counter-reset:st}
+.stepper li{counter-increment:st;border:1px solid var(--border-strong);border-radius:10px;padding:0 8px;font-size:11.5px;color:var(--muted)}
+.stepper li::before{content:counter(st) ". "}
+.stepper li.done{color:var(--ok);border-color:var(--ok)}
+.stepper li.now{background:var(--btn-bg);color:var(--btn-fg);border-color:var(--btn-bg);font-weight:bold}
+.opts{border:0;padding:0;margin:6px 0}
+.opts legend{padding:0;margin-bottom:4px;color:var(--fg)}
+.opt{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--border-strong);border-radius:4px;padding:6px 8px;margin:5px 0;cursor:pointer;background:var(--bg)}
+.opt:hover{background:var(--hover)}
+.opt input{margin-top:3px;flex:none;accent-color:var(--btn-bg)}
+.opt code{white-space:pre-wrap;word-break:break-word;color:var(--fg)}
+.fb{border-left:3px solid;padding:7px 10px;margin:8px 0;border-radius:0 4px 4px 0}
+.fb.ok{border-color:var(--ok);background:var(--ok-bg);color:var(--fg)} .fb.ok b{color:var(--ok)}
+.fb.bad{border-color:var(--err);background:var(--err-bg);color:var(--fg)} .fb.bad b{color:var(--err)}
+.fb.info{border-color:var(--accent);background:var(--info-bg);color:var(--fg)}
+.hint{border:1px dashed var(--border-strong);border-radius:4px;padding:6px 10px;margin:6px 0}
+.hint b{color:var(--warn)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chip{border:1px solid var(--border-strong);border-radius:12px;padding:1px 10px;background:var(--bg)}
+.chip:hover{background:var(--hover)}
+.guide ul{padding-left:18px;margin:6px 0}
+.guide .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.habit{border:1px solid var(--warn);border-radius:4px;padding:8px 10px;margin:10px 0}
+.habit b{color:var(--warn)}
+.locrow{display:flex;gap:8px;align-items:center;margin:8px 0}
+.locrow input{width:80px}
+.fixin{margin:4px 0}
+.row .gut.cond[aria-pressed="true"] .dot{background:var(--bg);box-shadow:inset 0 0 0 3px var(--bp)}
+#pbody .warn{color:var(--warn)}
+.cond-note{color:var(--muted)}
+@media print{
+  .titlebar,.activity,.sidebar,.tabrow,.panel,.guide,.status,#toast{display:none!important}
+  body{overflow:visible}
+  #app,.main,.work,.centre,.edwrap{display:block;height:auto;min-height:0}
+  #doc{position:static;overflow:visible}
+  .doc,.doc *{color:#000!important;background:#fff!important}
+}
+
+/* Status bar */
+.status{height:24px;flex:none;background:var(--status-bg);color:var(--status-fg);display:flex;align-items:center;justify-content:space-between;font-size:12px;padding:0 4px;gap:8px;overflow:hidden;white-space:nowrap}
+.status.debug{background:var(--status-debug)}
+.status div{display:flex;gap:2px;align-items:center;min-width:0}
+.status span,.status button{padding:2px 7px;color:var(--status-fg)}
+.status button:hover{background:rgba(255,255,255,.18)}
+.status :focus-visible{outline-color:#fff}
+#toast{position:fixed;right:18px;bottom:40px;max-width:380px;background:var(--tip-bg);color:var(--tip-fg);border:1px solid var(--border-strong);border-left:3px solid var(--accent);padding:10px 14px;border-radius:4px;box-shadow:0 4px 14px var(--shadow);z-index:90}
+#toast:empty{display:none}
+
+@media (max-width:1150px){
+  .sidebar{position:absolute;left:48px;top:0;bottom:0;z-index:30;box-shadow:4px 0 14px var(--shadow)}
+  .guide{width:320px}
+  .titlebar .menu{display:none}
+}
+@media (max-width:820px){
+  body{overflow:auto}
+  #app{height:auto;min-height:100vh}
+  .work{flex-direction:column}
+  .centre{height:82vh;min-height:520px;flex:none}
+  .guide{width:auto;border-left:0;border-top:1px solid var(--border);overflow:visible}
+  .winctl{display:none}
+  #doc{padding:16px}
+}
+@media (prefers-reduced-motion:no-preference){ .row{transition:background-color .08s} }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="titlebar">
+    <span class="logo" aria-hidden="true">&lt;/&gt;</span>
+    <div class="menu" aria-hidden="true"><span>File</span><span>Edit</span><span>Selection</span><span>View</span><span>Go</span><span>Run</span><span>Terminal</span><span>Help</span></div>
+    <div class="title" id="winTitle">Welcome - Debugging Lab</div>
+    <button class="tbtn" data-act="theme" id="themeTop" aria-label="Switch colour theme">Theme</button>
+    <div class="winctl" aria-hidden="true"><span>&#9472;</span><span>&#9633;</span><span>&#10005;</span></div>
+  </header>
+
+  <div class="main">
+    <nav class="activity" aria-label="Activity bar">
+      <button data-act="view" data-view="explorer" data-tip="Explorer" aria-label="Explorer" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h7l4 4v11H9z"/><path d="M16 4v4h4"/><path d="M9 9H4v11h9v-1"/></svg></button>
+      <button data-act="view" data-view="search" data-tip="Search" aria-label="Search" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.5"/><path d="M15 15l5 5"/></svg></button>
+      <button data-act="view" data-view="debug" data-tip="Run and Debug" aria-label="Run and Debug" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4l10 6.5-3 2L5 17z"/><circle cx="16.5" cy="17" r="3"/><path d="M16.5 12.5V14M12 17h1.5M19.5 17H21M13.5 13.5l1 1M19.5 13.5l-1 1"/></svg></button>
+      <button data-act="view" data-view="ext" data-tip="Extensions" aria-label="Extensions" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h6v6H4zM4 13h6v6H4zM11 13h6v6h-6z"/><path d="M14 4h6v6h-6z"/></svg></button>
+    </nav>
+
+    <aside class="sidebar" id="sidebar" aria-label="Side bar">
+      <section id="view-explorer" hidden>
+        <h2>Explorer</h2>
+        <details open><summary>debugging-lab</summary><div class="sec"><ul class="files" id="files"></ul></div></details>
+        <details open><summary>Progress</summary><div class="pwrap" id="progSide"></div></details>
+      </section>
+      <section id="view-search" hidden>
+        <h2>Search</h2>
+        <div class="watchform"><label class="sr" for="searchBox">Search the exercise files</label><input type="search" id="searchBox" placeholder="Search exercise files"></div>
+        <div class="sec" id="searchRes"><p class="empty">Type at least two characters.</p></div>
+      </section>
+      <section id="view-debug">
+        <h2>Run and Debug</h2>
+        <div class="startrow"><button class="btn wide" data-act="debug">&#9654; Start Debugging (F5)</button></div>
+        <details open><summary>Variables</summary><div class="sec" id="vVars"></div></details>
+        <details open><summary>Watch</summary><div class="sec"><ul id="vWatch"></ul>
+          <form class="watchform" id="watchForm"><label class="sr" for="watchIn">Expression to watch</label><input type="text" id="watchIn" placeholder="Expression, e.g. i &lt; 5" autocomplete="off"><button class="btn sec2" type="submit" aria-label="Add watch expression">Add</button></form></div></details>
+        <details open><summary>Call Stack</summary><div class="sec" id="vStack"></div></details>
+        <details open><summary>Breakpoints</summary><div class="sec" id="vBps"></div></details>
+      </section>
+      <section id="view-ext" hidden>
+        <h2>Extensions</h2>
+        <p class="empty">Installed (illustrative only)</p>
+        <div class="extitem"><b>Python language support and debugging</b><p>Syntax colouring, error reporting and step debugging for Python scripts, as provided by the Python extension in a real project. Simulated inside this lab.</p></div>
+        <div class="extitem"><b>Debugging Lab Guide</b><p>Provides the hypothesis-first exercise guide shown on the right of the editor.</p></div>
+        <div class="extitem"><b>Debugging Toolkit</b><p>Quick reference for Python error messages, breakpoints, stepping, watches and the call stack.</p><p><button class="btn sec2" data-act="tab" data-tab="toolkit">Open reference</button></p></div>
+      </section>
+    </aside>
+
+    <div class="work">
+      <main class="centre">
+        <div class="tabrow">
+          <div class="tabs" role="tablist" aria-label="Editor tabs" id="tabs"></div>
+          <div class="dbgbar" role="toolbar" aria-label="Run and debug toolbar" id="dbgbar"></div>
+        </div>
+        <div class="edwrap">
+          <div id="editor" tabindex="0" role="group" aria-label="Code editor. Use the up and down arrow keys to move between lines and F9 to toggle a breakpoint on the current line."><div id="code"></div></div>
+          <div id="doc" hidden tabindex="0" role="region" aria-label="Document"></div>
+        </div>
+        <section class="panel" aria-label="Panel">
+          <div class="ptabs" role="tablist" aria-label="Panel tabs" id="ptabs"></div>
+          <div id="pbody" role="log" tabindex="0" aria-label="Panel output"></div>
+        </section>
+      </main>
+      <aside class="guide" id="guide" aria-label="Lab guide"></aside>
+    </div>
+  </div>
+
+  <footer class="status" id="status">
+    <div><span id="stState">Debugging Lab</span><span id="stProb">Errors: 0</span></div>
+    <div><span id="stScore">Score: 0/100</span><span id="stPos">Ln 1, Col 1</span><span>Spaces: 4</span><span>UTF-8</span><span>Python</span><button data-act="theme" id="themeBottom" aria-label="Switch colour theme">Theme</button></div>
+  </footer>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div class="sr" id="live" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- helpers ---------- */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const clone=o=>JSON.parse(JSON.stringify(o));
+const store={
+  get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v);}catch(e){return d;}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+};
+const D=x=>({t:'double',v:x});
+const V=a=>({t:'vec',v:a});
+const R=s=>({t:'raw',v:s});
+
+/* ---------- syntax highlighting ---------- */
+const KW_CTL=new Set('if elif else for while return break continue pass import from as try except finally raise with'.split(' '));
+const KW=new Set('def class lambda global nonlocal True False None and or not in is'.split(' '));
+function hl(line){
+  const sp=(c,t)=>'<span class="'+c+'">'+esc(t)+'</span>';
+  const re=/(#.*$)|((?:[fFrRbB]{1,2})?(?:"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'))|(\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)|(\s+|.)/g;
+  let out='', m;
+  while((m=re.exec(line))){
+    if(m[1]) out+=sp('m',m[1]);
+    else if(m[2]) out+=sp('s',m[2]);
+    else if(m[3]) out+=sp('n',m[3]);
+    else if(m[4]){
+      const w=m[4];
+      if(KW_CTL.has(w)) out+=sp('c',w);
+      else if(KW.has(w)) out+=sp('k',w);
+      else if(/^\s*\(/.test(line.slice(re.lastIndex))) out+=sp('f',w);
+      else out+=sp('v',w);
+    } else out+=esc(m[0]);
+  }
+  return out;
+}
+
+/* ---------- values and watch evaluation ---------- */
+const F=x=>({t:'float',v:x});
+const A=o=>({t:'assoc',v:o});
+function typeOf(x){
+  if(x===null||x===undefined) return {t:'null',v:null};
+  if(typeof x==='object'&&!Array.isArray(x)&&x.t) return x;
+  if(typeof x==='number') return {t:Number.isInteger(x)?'int':'float',v:x};
+  if(typeof x==='string') return {t:'string',v:x};
+  if(typeof x==='boolean') return {t:'bool',v:x};
+  if(Array.isArray(x)) return {t:'arr',v:x};
+  return {t:'raw',v:String(x)};
+}
+function fmt(x){
+  x=typeOf(x);
+  switch(x.t){
+    case 'int': return String(x.v);
+    case 'float': return Number.isInteger(x.v)?x.v.toFixed(1):String(+x.v.toFixed(10));
+    case 'string': return "'"+x.v+"'";
+    case 'bool': return x.v?'True':'False';
+    case 'null': return 'None';
+    case 'arr': return '['+x.v.map(fmt).join(', ')+']';
+    case 'assoc': return '{'+Object.keys(x.v).map(k=>"'"+k+"': "+fmt(x.v[k])).join(', ')+'}';
+    default: return String(x.v);
+  }
+}
+function brief(x){
+  x=typeOf(x);
+  const s=fmt(x);
+  if((x.t==='arr'||x.t==='assoc')&&s.length>34) return (x.t==='arr'?'list':'dict')+' of '+(x.t==='arr'?x.v.length:Object.keys(x.v).length)+' items';
+  return s;
+}
+function kids(x,d){
+  x=typeOf(x);
+  if(x.t!=='arr'&&x.t!=='assoc') return '';
+  const keys=x.t==='arr'?x.v.map((_,i)=>i):Object.keys(x.v);
+  return keys.map(k=>{
+    const c=typeOf(x.v[k]);
+    return '<li class="var sub" style="padding-left:'+(24+14*d)+'px"><span class="vn">['+(x.t==='arr'?k:"'"+esc(k)+"'")+']</span> = <span class="vv t-'+c.t+'">'+esc(brief(c))+'</span></li>'+kids(c,d+1);
+  }).join('');
+}
+const TYPE_NAME={int:'int',float:'float',string:'str',bool:'bool',null:'NoneType',arr:'list',assoc:'dict',raw:''};
+function toBool(a){
+  a=typeOf(a);
+  switch(a.t){
+    case 'bool': return a.v;
+    case 'int': case 'float': return a.v!==0;
+    case 'string': return a.v!=='';
+    case 'null': return false;
+    case 'arr': return a.v.length>0;
+    case 'assoc': return Object.keys(a.v).length>0;
+    default: return true;
+  }
+}
+
+function evalWatch(src,vars){
+  src=src.trim();
+  if(/(^|[^=!<>])=($|[^=])/.test(src)) throw 'assignment is not evaluated here, because it would change the program state';
+  const toks=[]; const re=/\s*(\d+\.\d+|\d+|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|[A-Za-z_]\w*|==|!=|<=|>=|\/\/|[-+*\/%<>()\[\].,])/y;
+  let pos=0,m;
+  while(pos<src.length){ re.lastIndex=pos; m=re.exec(src); if(!m) throw 'the expression could not be parsed'; toks.push(m[1]); pos=re.lastIndex; }
+  let p=0;
+  const peek=()=>toks[p], next=()=>toks[p++];
+  const expect=x=>{ if(next()!==x) throw "expected '"+x+"'"; };
+  const B=v=>({t:'bool',v:v});
+  const tn=a=>TYPE_NAME[a.t]||'object';
+  const isN=a=>a.t==='int'||a.t==='float'||a.t==='bool';
+  const nv=a=>a.t==='bool'?(a.v?1:0):a.v;
+  const isF=a=>a.t==='float';
+  function pyStr(a){
+    switch(a.t){
+      case 'string': return a.v;
+      case 'raw': return String(a.v);
+      default: return fmt(a);
+    }
+  }
+  function eq(a,b){
+    if(isN(a)&&isN(b)) return nv(a)===nv(b);
+    if(a.t!==b.t) return false;
+    return JSON.stringify(a.v)===JSON.stringify(b.v);
+  }
+  function order(op,a,b){
+    let x,y;
+    if(isN(a)&&isN(b)){ x=nv(a); y=nv(b); }
+    else if(a.t==='string'&&b.t==='string'){ x=a.v; y=b.v; }
+    else throw "TypeError: '"+op+"' not supported between instances of '"+tn(a)+"' and '"+tn(b)+"'";
+    return op==='<'?x<y:op==='<='?x<=y:op==='>'?x>y:x>=y;
+  }
+  function contains(c,x){
+    if(c.t==='arr') return c.v.some(el=>eq(typeOf(el),x));
+    if(c.t==='assoc') return Object.prototype.hasOwnProperty.call(c.v,String(x.v));
+    if(c.t==='string'){ if(x.t!=='string') throw "TypeError: 'in <string>' requires string as left operand"; return c.v.indexOf(x.v)>=0; }
+    throw "TypeError: argument of type '"+tn(c)+"' is not iterable";
+  }
+  function arith(op,a,b){
+    if(a.t==='raw'||b.t==='raw') throw 'the value is not available';
+    if(op==='+'){
+      if(a.t==='string'&&b.t==='string') return {t:'string',v:a.v+b.v};
+      if(a.t==='arr'&&b.t==='arr') return {t:'arr',v:a.v.concat(b.v)};
+      if(a.t==='string') throw 'TypeError: can only concatenate str (not "'+tn(b)+'") to str';
+    }
+    if(op==='*'){
+      const s=a.t==='string'||a.t==='arr'?a:(b.t==='string'||b.t==='arr'?b:null), n=s===a?b:a;
+      if(s){
+        if(n.t!=='int'&&n.t!=='bool') throw "TypeError: can't multiply sequence by non-int of type '"+tn(n)+"'";
+        const k=Math.max(0,nv(n));
+        return s.t==='string'?{t:'string',v:s.v.repeat(k)}:{t:'arr',v:[].concat.apply([],Array(k).fill(s.v))};
+      }
+    }
+    if(!isN(a)||!isN(b)) throw "TypeError: unsupported operand type(s) for "+op+": '"+tn(a)+"' and '"+tn(b)+"'";
+    const x=nv(a), y=nv(b), fl=isF(a)||isF(b), T=fl?'float':'int';
+    switch(op){
+      case '+': return {t:T,v:x+y};
+      case '-': return {t:T,v:x-y};
+      case '*': return {t:T,v:x*y};
+      case '/': if(y===0) throw 'ZeroDivisionError: division by zero'; return {t:'float',v:x/y};
+      case '//': if(y===0) throw 'ZeroDivisionError: division by zero'; return {t:T,v:Math.floor(x/y)};
+      default: if(y===0) throw 'ZeroDivisionError: modulo by zero'; return {t:T,v:((x%y)+y)%y};
+    }
+  }
+  const level=(ops,sub)=>()=>{ let a=sub(); while(ops.indexOf(peek())>=0){ const op=next(); a=arith(op,a,sub()); } return a; };
+  function index(a,k){
+    if(a.t==='arr'||a.t==='string'){
+      if(k.t!=='int'&&k.t!=='bool') throw 'TypeError: '+(a.t==='arr'?'list':'string')+' indices must be integers, not '+tn(k);
+      let i=nv(k); const n=a.v.length; if(i<0) i+=n;
+      if(i<0||i>=n) return R('IndexError: '+(a.t==='arr'?'list':'string')+' index out of range');
+      return typeOf(a.v[i]);
+    }
+    if(a.t==='assoc'){
+      const key=String(k.v);
+      if(Object.prototype.hasOwnProperty.call(a.v,key)) return typeOf(a.v[key]);
+      return R('KeyError: '+fmt(k));
+    }
+    if(a.t==='raw') return a;
+    throw "TypeError: '"+tn(a)+"' object is not subscriptable";
+  }
+  function args(){
+    expect('('); const out=[];
+    if(peek()!==')'){ out.push(orE()); while(peek()===','){ next(); out.push(orE()); } }
+    expect(')'); return out;
+  }
+  function method(a,name){
+    const ar=args();
+    if(a.t==='assoc'&&name==='get'){ if(!ar.length) throw 'get() needs a key'; const key=String(ar[0].v); return Object.prototype.hasOwnProperty.call(a.v,key)?typeOf(a.v[key]):(ar[1]||{t:'null',v:null}); }
+    if(a.t==='string'){
+      if(name==='strip') return {t:'string',v:a.v.trim()};
+      if(name==='lower') return {t:'string',v:a.v.toLowerCase()};
+      if(name==='upper') return {t:'string',v:a.v.toUpperCase()};
+    }
+    if(a.t==='arr'&&name==='copy') return {t:'arr',v:a.v.slice()};
+    throw "the method '"+name+"' is not supported in this WATCH panel";
+  }
+  function call(name){
+    const ar=args(), a=ar[0];
+    const need=()=>{ if(!a) throw name+'() needs an argument'; };
+    switch(name){
+      case 'len': need(); if(a.t==='arr'||a.t==='string') return {t:'int',v:a.v.length}; if(a.t==='assoc') return {t:'int',v:Object.keys(a.v).length}; throw "TypeError: object of type '"+tn(a)+"' has no len()";
+      case 'type': need(); return R("<class '"+tn(a)+"'>");
+      case 'int': need(); if(a.t==='string'){ if(!/^\s*[+-]?\d+\s*$/.test(a.v)) throw "ValueError: invalid literal for int() with base 10: "+fmt(a); return {t:'int',v:parseInt(a.v,10)}; } if(!isN(a)) throw 'TypeError: int() argument must be a string or a number'; return {t:'int',v:Math.trunc(nv(a))};
+      case 'float': need(); if(a.t==='string'){ if(isNaN(Number(a.v))||!a.v.trim()) throw 'ValueError: could not convert string to float: '+fmt(a); return {t:'float',v:Number(a.v)}; } if(!isN(a)) throw 'TypeError: float() argument must be a string or a number'; return {t:'float',v:nv(a)};
+      case 'str': need(); return {t:'string',v:pyStr(a)};
+      case 'bool': return B(a?toBool(a):false);
+      case 'abs': need(); if(!isN(a)) throw 'TypeError: bad operand type for abs()'; return {t:isF(a)?'float':'int',v:Math.abs(nv(a))};
+      case 'round': need(); if(!isN(a)) throw 'TypeError: round() needs a number'; if(ar[1]){ const k=Math.pow(10,nv(ar[1])); return {t:'float',v:Math.round(nv(a)*k)/k}; } return {t:'int',v:Math.round(nv(a))};
+      case 'sum': case 'max': case 'min': {
+        need(); if(a.t!=='arr') throw 'TypeError: '+name+'() needs a list here';
+        const xs=a.v.map(typeOf); if(xs.some(x=>!isN(x))) throw 'TypeError: '+name+'() needs a list of numbers here';
+        if(name!=='sum'&&!xs.length) throw 'ValueError: '+name+'() of an empty list';
+        const vals=xs.map(nv), fl=xs.some(isF);
+        return {t:fl?'float':'int',v:name==='sum'?vals.reduce((s,v)=>s+v,0):name==='max'?Math.max.apply(null,vals):Math.min.apply(null,vals)};
+      }
+      default: throw "the function '"+name+"' is not supported in this WATCH panel";
+    }
+  }
+  function primary(){
+    const tk=next();
+    if(tk===undefined) throw 'the expression is incomplete';
+    if(tk==='('){ const a=orE(); expect(')'); return a; }
+    if(tk==='['){ const out=[]; if(peek()!==']'){ out.push(orE()); while(peek()===','){ next(); out.push(orE()); } } expect(']'); return {t:'arr',v:out}; }
+    if(/^\d/.test(tk)) return {t:tk.indexOf('.')>=0?'float':'int',v:parseFloat(tk)};
+    if(tk[0]==='"'||tk[0]==="'") return {t:'string',v:tk.slice(1,-1).replace(/\\(["'\\])/g,'$1')};
+    if(tk==='True'||tk==='False') return B(tk==='True');
+    if(tk==='None') return {t:'null',v:null};
+    if(/^[A-Za-z_]/.test(tk)){
+      if(peek()==='('&&!Object.prototype.hasOwnProperty.call(vars,tk)) return call(tk);
+      if(!Object.prototype.hasOwnProperty.call(vars,tk)) throw "NameError: name '"+tk+"' is not defined in this frame";
+      return typeOf(vars[tk]);
+    }
+    throw "unexpected '"+tk+"'";
+  }
+  function postfix(){
+    let a=primary();
+    for(;;){
+      if(peek()==='['){ next(); const k=orE(); expect(']'); a=index(a,k); }
+      else if(peek()==='.'){ next(); a=method(a,next()); }
+      else return a;
+    }
+  }
+  function unary(){
+    if(peek()==='-'){ next(); const a=unary(); if(!isN(a)) throw "TypeError: bad operand type for unary -: '"+tn(a)+"'"; return {t:isF(a)?'float':'int',v:-nv(a)}; }
+    return postfix();
+  }
+  const mul=level(['*','/','//','%'],unary), add=level(['+','-'],mul);
+  function cmp(){
+    let a=add(), result=null;
+    for(;;){
+      let op=peek();
+      if(op==='not'&&toks[p+1]==='in'){ next(); next(); op='not in'; }
+      else if(op==='is'){ next(); if(peek()==='not'){ next(); op='is not'; } }
+      else if(['==','!=','<','<=','>','>=','in'].indexOf(op)>=0) next();
+      else break;
+      const b=add(); let r;
+      if(op==='=='||op==='!=') r=eq(a,b)===(op==='==');
+      else if(op==='in'||op==='not in') r=contains(b,a)===(op==='in');
+      else if(op==='is'||op==='is not'){
+        const simple=x=>x.t==='null'||x.t==='bool';
+        if(!simple(a)&&!simple(b)) throw 'object identity cannot be shown in this WATCH panel: use == to compare values';
+        r=(a.t===b.t&&a.v===b.v)===(op==='is');
+      }
+      else r=order(op,a,b);
+      result=result===null?r:(result&&r);
+      a=b;
+    }
+    return result===null?a:B(result);
+  }
+  function notE(){ if(peek()==='not'){ next(); return B(!toBool(notE())); } return cmp(); }
+  function andE(){ let a=notE(); while(peek()==='and'){ next(); const b=notE(); a=toBool(a)?b:a; } return a; }
+  function orE(){ let a=andE(); while(peek()==='or'){ next(); const b=andE(); a=toBool(a)?a:b; } return a; }
+  const r=orE();
+  if(p<toks.length) throw "unexpected '"+toks[p]+"'";
+  return r;
+}
+
+/* ---------- exercises ---------- */
+const CF='Python parser (simulated)';
+const rep=(c,a,b)=>c.split(a).join(b);
+function norm(x){ return String(x).trim().replace(/'/g,'"').replace(/\s+/g,' ').replace(/ ?([^\w ]) ?/g,'$1'); }
+function capTrace(accumulate){
+  return function(t){
+    const v={}, head=t.L('for i in range'), body=t.L('items[i]["price"] * items[i]["quantity"]');
+    const items=[{name:'Notebook',price:2.5,quantity:4},{name:'Pen',price:1.2,quantity:10},{name:'Folder',price:3,quantity:2}];
+    t.s(t.L('items = ['),v); v.items=items.map(o=>A({name:o.name,price:F(o.price),quantity:o.quantity}));
+    t.s(t.L('vat_rate'),v); v.vat_rate=F(0.2);
+    t.s(t.L('subtotal = 0'),v); v.subtotal=0;
+    let sub=0;
+    for(let i=1;i<3;i++){
+      t.s(head,v); v.i=i;
+      t.s(body,v);
+      const line=items[i].price*items[i].quantity;
+      sub=accumulate?sub+line:line;
+      v.subtotal=F(sub);
+    }
+    t.s(head,v);
+    const tot=sub+sub*0.2;
+    t.s(t.L('total = subtotal'),v); v.total=F(tot);
+    t.s(t.L('"Items ordered'),v); t.o('Items ordered: 3\n');
+    t.s(t.L('"Subtotal:"'),v); t.o('Subtotal: '+sub.toFixed(1)+'\n');
+    t.s(t.L('"Total with VAT'),v); t.o('Total with VAT: '+(Math.round(tot*100)/100)+'\n');
+  };
+}
+
+const EX=[
+{
+  id:'y01', file:'01_indentation_error.py', title:'Inconsistent indentation', kind:'compile', group:'Syntax errors',
+  scenario:'The script should print a grade band (Distinction, Pass or Fail) for each of three marks and then report how many marks were processed, how many distinctions there were and how many passes.',
+  code:String.raw`# Prints a grade band for each mark in a list.
+
+marks = [72, 38, 55]
+distinctions = 0
+passes = 0
+
+for mark in marks:
+    if mark >= 70:
+        print(mark, "Distinction")
+        distinctions += 1
+    elif mark >= 40:
+        print(mark, "Pass")
+      passes += 1
+    else:
+        print(mark, "Fail")
+
+print("Marks processed:", len(marks))
+print("Distinctions:", distinctions)
+print("Passes:", passes)`,
+  diag:{at:'passes += 1',tok:'passes',msg:'IndentationError: unindent does not match any outer indentation level',
+    out:['  File "01_indentation_error.py", line 13','    passes += 1','               ^','IndentationError: unindent does not match any outer indentation level']},
+  fixedRun:['72 Distinction','38 Fail','55 Pass','Marks processed: 3','Distinctions: 1','Passes: 1'],
+  hyps:[
+    {t:'The += operator cannot be used inside an elif block.'},
+    {t:'A colon is missing from the end of the elif line.'},
+    {t:'Line 13 is indented by an amount that matches neither the block it belongs to nor any block around it.',ok:true},
+    {t:'The variable passes has not been created before line 13.'}
+  ],
+  cause:'Line 13 is indented by six spaces. The statements inside the elif block use eight, and the enclosing blocks use four and zero, so Python cannot tell which block the line belongs to.',
+  invest:'Python checks the syntax of the whole file before running any of it, so nothing was executed. In this lab the debug controls replay how Python tracks indentation as it reads the file. Step through and compare <b>indent of this line</b> with <b>open indentation levels</b>.',
+  bp:'elif mark >= 40', watch:[],
+  hints:[
+    'In Python, indentation is not decoration: it is how the language marks the start and end of a block.',
+    'Count the spaces in front of lines 12 and 13. Both are meant to be in the same block.',
+    'Line 13 has six spaces. The levels in use at that point are 0, 4 and 8.'
+  ],
+  fault:'passes += 1',
+  near:{'print(mark, "Pass")':'Line 12 is indented correctly, with eight spaces. Compare it with the line beneath it.','elif mark >= 40':'The elif line is correct and ends with its colon. The problem lies inside its block.'},
+  acceptRe:/^8$/,
+  typePrompt:'The statement on line 13 is correct, but its indentation is not. Type the number of spaces that should come before it:',
+  fixes:[
+    {d:'Indent line 13 with four spaces, so that it lines up with elif.',fb:'The file would then be valid, but line 13 would end the elif block early and the else on line 14 would have no if to belong to, which is a different syntax error.'},
+    {d:'Indent line 13 with eight spaces, so that it lines up with the print statement on line 12.',ok:true,fb:'Both statements of the elif block now share the same indentation, so Python reads them as one block.'},
+    {d:'Add a colon to the end of line 12.',fb:'A colon introduces a new block after statements such as if and for. A print statement cannot open one.'},
+    {d:'Remove all indentation from line 13.',fb:'With no indentation the line would end the for loop, and the else on line 14 would be left without an if.'}
+  ],
+  patch:c=>rep(c,'\n      passes += 1','\n        passes += 1'),
+  explain:'Python uses indentation to decide which statements belong to which block. Each deeper level must be consistent within its block, and when a line steps back out it must return to a level that is already in use. Line 13 stepped back from eight spaces to six, a level that matches nothing, so Python stopped with an <code>IndentationError</code> before running a single line. Editors make this hard to see when tabs and spaces are mixed, so configure the editor to insert four spaces for each level.',
+  habit:'When Python reports an indentation error, count the leading spaces of the reported line and of its neighbours instead of judging by eye.',
+  trace(t){
+    const C=(txt,ind,levels,note)=>({statement:R(txt),'indent of this line':R(ind),'open indentation levels':R(levels),note:R(note)});
+    t.s(t.L('for mark in marks'),C('for mark in marks:','0 spaces','0','the colon announces a new, deeper block'),CF);
+    t.s(t.L('if mark >= 70'),C('if mark >= 70:','4 spaces','0, 4','a new level opens for the body of the for loop'),CF);
+    t.s(t.L('"Distinction"'),C('print(mark, "Distinction")','8 spaces','0, 4, 8','a new level opens for the body of the if'),CF);
+    t.s(t.L('elif mark >= 40'),C('elif mark >= 40:','4 spaces','0, 4','back to level 4, which exists: the if block is closed'),CF);
+    t.s(t.L('print(mark, "Pass")'),C('print(mark, "Pass")','8 spaces','0, 4, 8','level 8 opens again for the body of the elif'),CF);
+    t.s(t.L('passes += 1'),C('passes += 1','6 spaces','0, 4, 8','error: 6 is less than 8 but matches neither 4 nor 0'),CF);
+  }
+},
+{
+  id:'y02', file:'02_unclosed_bracket.py', title:'Unclosed bracket', kind:'compile', group:'Syntax errors',
+  scenario:'The script should add up three prices, add a delivery charge of 3.99 and print the number of items, the subtotal (6.7), the delivery charge and the total (10.69).',
+  code:String.raw`# Calculates the cost of a stationery order including delivery.
+
+prices = [
+    2.50,
+    1.20,
+    3.00
+
+delivery = 3.99
+subtotal = sum(prices)
+total = subtotal + delivery
+
+print("Items:", len(prices))
+print("Subtotal:", subtotal)
+print("Delivery:", delivery)
+print("Total:", round(total, 2))`,
+  diag:{at:'prices = [',tok:'[',msg:"SyntaxError: '[' was never closed",
+    out:['  File "02_unclosed_bracket.py", line 3','    prices = [','             ^',"SyntaxError: '[' was never closed"]},
+  fixedRun:['Items: 3','Subtotal: 6.7','Delivery: 3.99','Total: 10.69'],
+  hyps:[
+    {t:'A list is not allowed to be written across several lines.'},
+    {t:'The list that starts on line 3 is never ended, so Python treats everything after it as part of the list.',ok:true},
+    {t:'A comma is missing after 3.00 on line 6.'},
+    {t:'sum() cannot add decimal numbers.'}
+  ],
+  cause:'The list opened by [ on line 3 has no closing ]. Python reports the line on which the bracket was opened, but the missing bracket belongs after the last item, on line 6.',
+  invest:'Nothing was executed, so the debug controls replay how Python pairs brackets. Step through and watch <b>open brackets</b>. Notice that a new line does not end a statement while a bracket is still open.',
+  bp:'prices = [', watch:[],
+  hints:[
+    'The message says where a bracket was opened. It does not say where the closing bracket ought to be.',
+    'While a bracket is open, Python ignores line endings and keeps reading. Where should this list finish?',
+    'The list has three items, on lines 4, 5 and 6. What should follow the last one?'
+  ],
+  fault:'3.00',
+  locPrompt:'A closing bracket is missing. Select the line after which it should appear, or type its number, then confirm the choice.',
+  near:{'prices = [':'Python names line 3 because the bracket was opened here, and opening it is correct. Select the line after which the list should have been closed.','delivery = 3.99':'This statement is correct in itself. Python reads it as a continuation of the list only because the list was never closed.'},
+  acceptRe:/^\]$/,
+  typePrompt:'Type the single character that is missing after line 6 (the editor will place it on a line of its own):',
+  fixes:[
+    {d:'Add a comma after 3.00 on line 6.',fb:'A trailing comma is allowed in a list, but the list would still have no end.'},
+    {d:'Add a closing square bracket on a new line after line 6.',ok:true,fb:'The list now ends after its third item, so line 8 is read as a new statement.'},
+    {d:'Add a closing square bracket at the very end of the file.',fb:'The bracket would then be closed, but every statement from line 8 onwards would be inside the list, where an assignment is not allowed.'},
+    {d:'Replace the opening square bracket on line 3 with a round bracket.',fb:'A round bracket would need closing in exactly the same way, and the result would be a tuple instead of a list.'}
+  ],
+  patch:c=>rep(c,'    3.00\n','    3.00\n]\n'),
+  explain:'Inside brackets Python ignores line endings, which is what allows a list to be laid out over several lines. The price of that convenience is that an unclosed bracket swallows the rest of the file. Recent versions of Python report the line on which the bracket was <em>opened</em>, which is a strong clue, but the repair has to be made where the bracket should have been <em>closed</em>. As with every syntax error, not one line of the script was run.',
+  habit:'For an unclosed bracket, start at the line Python names and read forward to find where the bracketed item should have ended.',
+  trace(t){
+    const C=(tok,open,note)=>({reading:R(tok),'open brackets':R(open),note:R(note)});
+    const a=t.L('prices = [');
+    t.s(a,C('prices = [','[ (line 3)','a bracket opens'),CF);
+    t.s(a+1,C('2.50,','[ (line 3)','an item of the list'),CF);
+    t.s(a+3,C('3.00','[ (line 3)','the last item: the line ends, but the bracket is still open'),CF);
+    t.s(t.L('delivery = 3.99'),C('delivery = 3.99','[ (line 3)','line endings are ignored inside brackets, so this is read as more of the list'),CF);
+    t.s(t.L('"Total:"'),C('end of file','[ (line 3)','error: the file ended with a bracket still open'),CF);
+  }
+},
+{
+  id:'y03', file:'03_type_error.py', title:'TypeError and tracebacks', kind:'runtime', group:'Exceptions', stepInto:true,
+  endMsg:"Exception has occurred: TypeError. can't multiply sequence by non-int of type 'float'. The script stopped on line 4, inside order_cost().",
+  scenario:'The script should work out the cost of a ticket order submitted through a web form. For 3 tickets at 12.50 each it should print "Order cost: 37.5".',
+  code:String.raw`# Works out the cost of a ticket order placed through a web form.
+
+def order_cost(quantity, price):
+    cost = quantity * price
+    return cost
+
+
+form_input = "3"      # values submitted by a form arrive as text
+ticket_price = 12.50
+
+print("Tickets requested:", form_input)
+
+total = order_cost(form_input, ticket_price)
+
+print("Order cost:", total)`,
+  run:['Tickets requested: 3','Traceback (most recent call last):','  File "03_type_error.py", line 13, in <module>','    total = order_cost(form_input, ticket_price)','  File "03_type_error.py", line 4, in order_cost','    cost = quantity * price','           ~~~~~~~~~^~~~~~~',"TypeError: can't multiply sequence by non-int of type 'float'"],
+  fixedRun:['Tickets requested: 3','Order cost: 37.5'],
+  hyps:[
+    {t:'The multiplication on line 4 is written incorrectly.'},
+    {t:'The form value is a string, and a string cannot be multiplied by a decimal number.',ok:true},
+    {t:'A function must be defined after the code that calls it.'},
+    {t:'12.50 has too many decimal places to be multiplied.'}
+  ],
+  cause:'form_input holds the string "3", not the number 3. Inside order_cost, Python is asked to multiply a string by a float, which is not a defined operation, so it raises a TypeError.',
+  invest:'An exception happens while the script is running, so the first line of output did appear. Set a breakpoint on the call and use <b>Step Into</b> (F11). Inside the function, inspect the type of each parameter with the watch expressions below.',
+  bp:'total = order_cost', watch:['type(quantity)','type(price)','int(quantity) * price'],
+  hints:[
+    'Read the traceback from the bottom: the last line names the error, and the lines above show the chain of calls that led to it.',
+    'In the message, "sequence" means the string. Look at quantity in VARIABLES: is \'3\' in quotation marks the same thing as 3?',
+    'The value needs converting to an integer before it is used as a number, for example with int().'
+  ],
+  fault:'total = order_cost',
+  near:{'cost = quantity * price':'This is where the exception was raised, and the multiplication is written correctly. The function was handed a value of the wrong type. Look further up the traceback to see where that value came from.','form_input = "3"':'Form data really does arrive as text, so this line models the situation faithfully. The fault lies in how the text is used.'},
+  fixes:[
+    {c:'total = order_cost(str(form_input), ticket_price)',fb:'str() produces a string, which is what the value already was.'},
+    {c:'total = order_cost(ticket_price, form_input)',fb:'Swapping the arguments multiplies a float by a string, which fails in the same way.'},
+    {c:'total = order_cost(int(form_input), ticket_price)',ok:true,fb:'int() converts the text "3" to the integer 3 before it is passed, so the function receives two numbers.'},
+    {c:'total = order_cost(form_input, int(ticket_price))',fb:'With an integer price the multiplication would run without an error, but "3" * 12 repeats the text twelve times: the result would be 333333333333.'}
+  ],
+  accept:['total = order_cost(float(form_input), ticket_price)'],
+  patch:c=>rep(c,'order_cost(form_input,','order_cost(int(form_input),'),
+  explain:'A traceback lists the chain of calls with the most recent last, so it is best read from the bottom upwards. The final line gave the error; the entry above it showed where it was raised (line 4, inside <code>order_cost</code>); and the entry above that showed who called the function (line 13). The multiplication on line 4 was innocent: it was handed <code>\'3\'</code>, a string, by the caller. Python does not convert between text and numbers automatically, so the conversion has to be written. One alternative fix removes the error while producing nonsense, because a string multiplied by an <em>integer</em> is repeated. In real code the input should also be validated before it is converted.',
+  habit:'Read a traceback from the bottom up: the error first, then where it was raised, then who called it.',
+  trace(t){
+    const m={}, call=t.L('total = order_cost');
+    t.s(t.L('def order_cost'),m);
+    t.s(t.L('form_input = "3"'),m); m.form_input='3';
+    t.s(t.L('ticket_price'),m); m.ticket_price=F(12.5);
+    t.s(t.L('"Tickets requested'),m); t.o('Tickets requested: 3\n');
+    t.s(call,m);
+    t.sf([{fn:'<module>',l:call,v:m},{fn:'order_cost(quantity, price)',l:t.L('cost = quantity * price'),v:{quantity:'3',price:F(12.5)}}]);
+  }
+},
+{
+  id:'y04', file:'04_key_error.py', title:'KeyError', kind:'runtime', group:'Exceptions',
+  endMsg:"Exception has occurred: KeyError. 'emial'. The script stopped on line 11.",
+  scenario:'The script should print a contact card showing the name, email address and course held in a user record, followed by the number of fields and "Card printed".',
+  code:String.raw`# Prints a contact card from a user record.
+# Each field is looked up by its key.
+
+user = {
+    "name": "Amara Okafor",
+    "email": "amara@example.ac.uk",
+    "course": "Software Engineering",
+}
+
+print("Name:", user["name"])
+print("Email:", user["emial"])
+print("Course:", user["course"])
+
+print("Fields stored:", len(user))
+print("Card printed")`,
+  run:['Name: Amara Okafor','Traceback (most recent call last):','  File "04_key_error.py", line 11, in <module>','    print("Email:", user["emial"])','                    ~~~~^^^^^^^^^',"KeyError: 'emial'"],
+  fixedRun:['Name: Amara Okafor','Email: amara@example.ac.uk','Course: Software Engineering','Fields stored: 3','Card printed'],
+  hyps:[
+    {t:'The email address was stored as an empty string.'},
+    {t:'The key used on line 11 does not match any key in the dictionary.',ok:true},
+    {t:'print() cannot display a value taken from a dictionary.'},
+    {t:'Dictionary values must be read using a numbered position.'}
+  ],
+  cause:'The key is spelt "emial" on line 11 but "email" where the dictionary is built. No entry has the misspelt key, so Python raises a KeyError.',
+  invest:'Pause on line 11 and expand <b>user</b> in VARIABLES to see the keys that really exist. Then add the watch expressions below and compare them.',
+  bp:'print("Email:"', watch:['user["email"]','user["emial"]','"emial" in user'],
+  hints:[
+    'The last line of the traceback quotes the exact key that Python was asked for.',
+    'Expand user in VARIABLES. Is the quoted key in the list?',
+    'Compare the spelling of the key on line 11 with the key on line 6, letter by letter.'
+  ],
+  fault:'print("Email:"',
+  near:{'"email": "amara':'The key is spelt correctly here, and the value is stored. The fault is in how the entry is read back.'},
+  fixes:[
+    {c:'print("Email:", user[email])',fb:'Without quotation marks, email is read as a variable name, and no such variable exists: Python would raise a NameError.'},
+    {c:'print("Email:", user.get("emial"))',fb:'get() returns None instead of raising an error, so the script would run and print "Email: None". The fault would be hidden, not fixed.'},
+    {c:'print("Email:", user["email"])',ok:true,fb:'The key now matches the one used when the dictionary was built, so the stored address is found.'},
+    {c:'print("Email:", user[1])',fb:'A dictionary is looked up by key, not by position. No entry has the key 1, so this raises a different KeyError.'}
+  ],
+  patch:c=>rep(c,'user["emial"]','user["email"]'),
+  explain:'A dictionary maps keys to values, and a key is matched exactly, character for character. Asking for a key that does not exist raises a <code>KeyError</code> and stops the script at that line, which is why only the name was printed. The exception named the missing key, so reading the message carefully was most of the diagnosis. The <code>get()</code> method is useful when a key is genuinely optional, but using it here would have replaced a clear error with a silently wrong card.',
+  habit:'Read the last line of a traceback word for word before opening the debugger: it often quotes the exact value that was wrong.',
+  trace(t){
+    const v={};
+    t.s(t.L('user = {'),v); v.user=A({name:'Amara Okafor',email:'amara@example.ac.uk',course:'Software Engineering'});
+    t.s(t.L('print("Name:"'),v); t.o('Name: Amara Okafor\n');
+    t.s(t.L('print("Email:"'),v);
+  }
+},
+{
+  id:'y05', file:'05_off_by_one.py', title:'Off-by-one range', kind:'runtime', group:'Exceptions',
+  endMsg:'Exception has occurred: IndexError. list index out of range. The script stopped on line 10.',
+  scenario:'The script should list five module marks, one per line, and then print how many were listed, their total (370) and "End of report".',
+  code:String.raw`# Lists five module marks, one per line,
+# and then prints their total.
+# The marks are stored in a list.
+
+marks = [72, 65, 88, 54, 91]
+count = len(marks)
+total = 0
+
+for i in range(count + 1):
+    print("Module", i + 1, "mark:", marks[i])
+    total += marks[i]
+
+print("Modules listed:", count)
+print("Total:", total)
+print("End of report")`,
+  run:['Module 1 mark: 72','Module 2 mark: 65','Module 3 mark: 88','Module 4 mark: 54','Module 5 mark: 91','Traceback (most recent call last):','  File "05_off_by_one.py", line 10, in <module>','    print("Module", i + 1, "mark:", marks[i])','                                    ~~~~~^^^','IndexError: list index out of range'],
+  fixedRun:['Module 1 mark: 72','Module 2 mark: 65','Module 3 mark: 88','Module 4 mark: 54','Module 5 mark: 91','Modules listed: 5','Total: 370','End of report'],
+  hyps:[
+    {t:'The list has been created with only four elements.'},
+    {t:'len(marks) returns 6 instead of 5.'},
+    {t:'The loop runs one time too many and asks for an element that does not exist.',ok:true},
+    {t:'total is not initialised before the loop.'}
+  ],
+  cause:'range(count + 1) produces 0, 1, 2, 3, 4 and 5, but the valid indexes of a five-element list are 0 to 4. marks[5] does not exist, so Python raises an IndexError.',
+  invest:'Stepping through five correct iterations is slow. Use the conditional breakpoint below to pause only on the iteration that goes wrong, then inspect <b>i</b> and the watch expressions.',
+  bp:'print("Module"', cond:'i == 5', watch:['marks[i]','len(marks)','i < len(marks)'],
+  hints:[
+    'All five marks were printed before the error. What was the loop trying to do next?',
+    'A list of 5 elements has indexes 0 to 4. Which values does range(count + 1) produce?',
+    'range(n) already stops one short of n. Look at what has been added inside the brackets on line 9.'
+  ],
+  fault:'for i in range',
+  near:{'print("Module"':'This line is where the exception is raised, but it only uses the value of i that the loop gives it. Consider which line decides the values of i.','total += marks[i]':'The addition is correct for a valid index. Consider which line allows an invalid index to be produced.'},
+  fixes:[
+    {c:'for i in range(1, count + 1):',fb:'Starting at 1 skips the first mark and still asks for index 5, so two faults are now present.'},
+    {c:'for i in range(count - 1):',fb:'The loop now stops one element early, at index 3, and the last mark would be left out.'},
+    {c:'for i in range(count + 2):',fb:'This asks for two indexes beyond the list instead of one.'},
+    {c:'for i in range(count):',ok:true,fb:'range(count) produces 0 to 4, exactly the five indexes that exist.'}
+  ],
+  accept:['for i in range(0, count):','for i in range(len(marks)):','for i in range(0, len(marks)):','for i in range(5):'],
+  patch:c=>rep(c,'range(count + 1)','range(count)'),
+  explain:'<code>range(n)</code> produces the numbers from 0 up to, but not including, <code>n</code>, which is exactly the set of valid indexes for a list of length <code>n</code>. Adding 1 produced one index too many. Unlike some languages, Python checks every index: asking for <code>marks[5]</code> raised an <code>IndexError</code> immediately instead of returning a meaningless value. When the index itself is not needed, <code>for mark in marks:</code> avoids the problem altogether.',
+  habit:'At every loop, check the first and the last value of the loop variable against the indexes that actually exist, and loop over the list directly when the index is not needed.',
+  trace(t){
+    const v={}, head=t.L('for i in range'), a=t.L('print("Module"'), b=t.L('total += marks[i]');
+    t.s(t.L('marks = ['),v); v.marks=[72,65,88,54,91];
+    t.s(t.L('count = len'),v); v.count=5;
+    t.s(t.L('total = 0'),v); v.total=0;
+    for(let i=0;i<=5;i++){
+      t.s(head,v); v.i=i;
+      t.s(a,v);
+      if(i===5) break;
+      t.o('Module '+(i+1)+' mark: '+v.marks[i]+'\n');
+      t.s(b,v); v.total+=v.marks[i];
+    }
+  }
+},
+{
+  id:'y06', file:'06_floor_division.py', title:'Floor division', kind:'runtime', group:'Logic errors',
+  scenario:'The script should calculate the average of five quiz scores (7, 8, 6, 9 and 9). The sum is 39, so the average should be 7.8.',
+  code:String.raw`# Calculates the average of five quiz scores.
+
+scores = [7, 8, 6, 9, 9]
+total = 0
+
+for score in scores:
+    total += score
+
+count = len(scores)
+average = total // count
+
+print("Scores entered:", count)
+print("Sum:", total)
+print("Average:", average)
+print("Report complete")`,
+  run:['Scores entered: 5','Sum: 39','Average: 7','Report complete'],
+  fixedRun:['Scores entered: 5','Sum: 39','Average: 7.8','Report complete'],
+  hyps:[
+    {t:'The loop misses one of the scores, so the sum is too small.'},
+    {t:'print() rounds decimal numbers to whole numbers.'},
+    {t:'len(scores) returns the wrong number of scores.'},
+    {t:'The division operator used on line 10 throws away the fractional part of the result.',ok:true}
+  ],
+  cause:'Line 10 uses //, the floor division operator, which rounds the result down to a whole number. 39 // 5 is 7. Ordinary division, written with a single /, gives 7.8.',
+  invest:'Check the loop first to confirm the sum, then set a breakpoint on the division. Add the watch expressions below and compare their values.',
+  bp:'average = total', watch:['total // count','total / count','total % count'],
+  hints:[
+    'The sum and the count printed are both correct, so the loop can be eliminated. Which line is left?',
+    'Python has two division operators. Look closely at the one on line 10.',
+    'A single / always gives a decimal result. A double // rounds down to a whole number.'
+  ],
+  fault:'average = total',
+  near:{'print("Average:"':'The print statement displays the value it is given faithfully. Check the value of average in VARIABLES before this line runs.'},
+  fixes:[
+    {c:'average = float(total // count)',fb:'The floor division still happens first. Converting 7 to a float afterwards gives 7.0, not 7.8.'},
+    {c:'average = total % count',fb:'The % operator gives the remainder of the division (4), not the average.'},
+    {c:'average = total / count',ok:true,fb:'A single / performs true division and gives the decimal result 7.8.'},
+    {c:'average = int(total / count)',fb:'The division is now correct, but int() immediately cuts the result back down to 7.'}
+  ],
+  accept:['average = float(total) / count','average = total / float(count)','average = total / len(scores)','average = sum(scores) / count','average = sum(scores) / len(scores)'],
+  patch:c=>rep(c,'total // count','total / count'),
+  explain:'Python has two division operators. <code>/</code> is true division and always produces a float, so <code>39 / 5</code> is 7.8. <code>//</code> is floor division: it rounds the result down to the nearest whole number, so <code>39 // 5</code> is 7. Floor division is the right tool for questions such as "how many full boxes?", and the wrong one for an average. The two differ by a single character, which makes this fault easy to type and hard to see.',
+  habit:'When a result looks rounded, evaluate the sub-expressions in the WATCH panel and check which operator produced them.',
+  trace(t){
+    const v={}, head=t.L('for score in scores'), body=t.L('total += score');
+    t.s(t.L('scores = ['),v); v.scores=[7,8,6,9,9];
+    t.s(t.L('total = 0'),v); v.total=0;
+    [7,8,6,9,9].forEach(s=>{ t.s(head,v); v.score=s; t.s(body,v); v.total+=s; });
+    t.s(head,v);
+    t.s(t.L('count = len'),v); v.count=5;
+    t.s(t.L('average = total'),v); v.average=7;
+    t.s(t.L('"Scores entered'),v); t.o('Scores entered: 5\n');
+    t.s(t.L('"Sum:"'),v); t.o('Sum: 39\n');
+    t.s(t.L('"Average:"'),v); t.o('Average: 7\n');
+    t.s(t.L('"Report complete'),v); t.o('Report complete\n');
+  }
+},
+{
+  id:'y07', file:'07_type_comparison.py', title:'Comparing text with a number', kind:'runtime', group:'Logic errors',
+  scenario:'The script should check the guess typed by a player against the secret number. The player typed 7 and the secret number is 7, so it should print "Result: Correct".',
+  code:String.raw`# Checks a guess typed by the player against the secret number.
+# Text typed at the keyboard always arrives as a string.
+
+secret = 7
+guess = "7"      # what input() returned when the player typed 7
+attempts = 1
+
+if guess == secret:
+    result = "Correct"
+else:
+    result = "Wrong"
+
+print("Guess:", guess)
+print("Result:", result)
+print("Attempts used:", attempts)`,
+  run:['Guess: 7','Result: Wrong','Attempts used: 1'],
+  fixedRun:['Guess: 7','Result: Correct','Attempts used: 1'],
+  hyps:[
+    {t:'The if and else branches are the wrong way round.'},
+    {t:'The == operator only works on strings.'},
+    {t:'guess is a string and secret is an integer, and Python never treats a string as equal to a number.',ok:true},
+    {t:'secret is changed before the comparison is made.'}
+  ],
+  cause:'guess holds the string "7" and secret holds the integer 7. Python does not convert types when comparing, so "7" == 7 is False even though both print as 7.',
+  invest:'Pause on the if statement and look closely at how <b>guess</b> and <b>secret</b> are displayed in VARIABLES. Then add the watch expressions below.',
+  bp:'if guess == secret', watch:['guess == secret','type(guess)','type(secret)','int(guess) == secret'],
+  hints:[
+    'The output shows "Guess: 7". print() does not show quotation marks, so it cannot reveal the type of a value.',
+    'Compare how the two variables appear in VARIABLES. One of them has quotation marks.',
+    'Convert the text to a number before comparing, for example with int().'
+  ],
+  fault:'if guess == secret',
+  near:{'guess = "7"':'This line models what input() really returns, which is always a string. The fault lies in comparing that text with a number.','result = "Wrong"':'This assignment is correct for a guess that does not match. The question is why the script decided that the guess did not match.'},
+  fixes:[
+    {c:'if guess = secret:',fb:'A single = is an assignment, which Python does not allow inside an if condition: this is a SyntaxError.'},
+    {c:'if guess is secret:',fb:'The is operator asks whether two names refer to the very same object. A string and an integer never do, so the result is still False.'},
+    {c:'if int(guess) == secret:',ok:true,fb:'int() converts the text "7" to the integer 7, so two numbers are compared and found equal.'},
+    {c:'if guess != secret:',fb:'This reverses the test. It would print "Correct" here, but for the wrong reason: every wrong guess would also be accepted.'}
+  ],
+  accept:['if guess == str(secret):','if secret == int(guess):','if str(secret) == guess:'],
+  wall:{tool:'mypy --strict',at:'if guess == secret',tok:'guess',msg:'error: Non-overlapping equality check (left operand type: "str", right operand type: "int")  [comparison-overlap]'},
+  patch:c=>rep(c,'if guess == secret:','if int(guess) == secret:'),
+  explain:'Python is strongly typed: the string <code>\'7\'</code> and the integer <code>7</code> are different values, and <code>==</code> between them is simply <code>False</code>. No error or warning is raised, because comparing two unlike things is perfectly legal. The fault was invisible in the output, since <code>print()</code> shows both as 7, but obvious in the debugger, which displays strings in quotation marks. Everything returned by <code>input()</code> is a string and must be converted before it is treated as a number.',
+  habit:'When two values that look the same are not equal, check their types in the debugger: print() hides the difference between text and numbers.',
+  trace(t){
+    const v={};
+    t.s(t.L('secret = 7'),v); v.secret=7;
+    t.s(t.L('guess = "7"'),v); v.guess='7';
+    t.s(t.L('attempts = 1'),v); v.attempts=1;
+    t.s(t.L('if guess == secret'),v);
+    t.s(t.L('result = "Wrong"'),v); v.result='Wrong';
+    t.s(t.L('print("Guess:"'),v); t.o('Guess: 7\n');
+    t.s(t.L('print("Result:"'),v); t.o('Result: Wrong\n');
+    t.s(t.L('"Attempts used'),v); t.o('Attempts used: 1\n');
+  }
+},
+{
+  id:'y08', file:'08_infinite_loop.py', title:'Infinite loop', kind:'runtime', group:'Logic errors',
+  scenario:'The script should pack 15 items of stock into boxes of five, printing the stock level before each box (15, 10 and 5), and then print "Packing finished" and "Stock left: 0".',
+  code:String.raw`# Packs the remaining stock into boxes, five items at a time.
+# Each pass of the loop packs one box.
+# The loop should stop when no stock is left.
+
+stock = 15
+box_size = 5
+
+print("Packing started")
+
+while stock > 0:
+    print("Box packed, stock before packing:", stock)
+    stock - box_size
+
+print("Packing finished")
+print("Stock left:", stock)`,
+  run:['Packing started','Box packed, stock before packing: 15','Box packed, stock before packing: 15','Box packed, stock before packing: 15','Box packed, stock before packing: 15','Box packed, stock before packing: 15','Box packed, stock before packing: 15','Box packed, stock before packing: 15','Box packed, stock before packing: 15'],
+  runNote:'The output never stops. The script was terminated with Ctrl+C, which raises KeyboardInterrupt.',
+  fixedRun:['Packing started','Box packed, stock before packing: 15','Box packed, stock before packing: 10','Box packed, stock before packing: 5','Packing finished','Stock left: 0'],
+  hyps:[
+    {t:'The condition stock > 0 is written the wrong way round.'},
+    {t:'print() repeats its output until it is told to stop.'},
+    {t:'stock never changes inside the loop, so the condition stays true for ever.',ok:true},
+    {t:'box_size should be larger than stock.'}
+  ],
+  cause:'The statement stock - box_size calculates 10 and throws the result away. stock is never updated, so stock > 0 remains true and the loop cannot end.',
+  invest:'Use Step Over to go round the loop two or three times and watch <b>stock</b>. Pressing Continue with no breakpoint lets the script run away, just as it did in the terminal: use Pause or Stop to regain control.',
+  bp:'while stock > 0', watch:['stock > 0','stock - box_size'],
+  hints:[
+    'A loop ends when its condition becomes false. Which variable does the condition depend on?',
+    'Step round the loop twice. Does the value of stock differ between the first and second pass?',
+    'Line 12 computes a value. Where does that value go?'
+  ],
+  fault:'stock - box_size',
+  near:{'while stock > 0':'The condition is sensible for this task. The question is why it never becomes false.','print("Box packed':'This line only prints stock. Look for the line that was meant to change it.'},
+  fixes:[
+    {c:'stock + box_size',fb:'This is still an expression whose result is discarded, so stock remains 15.'},
+    {c:'stock == stock - box_size',fb:'== compares the two values and gives False. Nothing is stored in stock.'},
+    {c:'stock = stock - box_size',ok:true,fb:'The assignment stores the new value back into stock, so the condition eventually becomes false. Writing stock -= box_size is equivalent.'},
+    {c:'box_size = stock - box_size',fb:'This changes the wrong variable. stock, which the loop condition tests, is still never updated.'}
+  ],
+  accept:['stock -= box_size','stock = stock - 5','stock -= 5'],
+  wall:{tool:'pylint',at:'stock - box_size',tok:'stock',msg:'W0104: Statement seems to have no effect (pointless-statement)'},
+  patch:c=>rep(c,'    stock - box_size','    stock = stock - box_size'),
+  explain:'<code>stock - box_size</code> on a line of its own is a valid statement: Python evaluates the expression and then discards the result. Because nothing was assigned, <code>stock</code> stayed at 15 and the loop condition could never become false. Every loop needs a control variable that moves towards the exit condition on each pass.',
+  habit:'For every loop, identify the control variable and confirm in the debugger that it changes on each iteration.',
+  trace(t){
+    const v={};
+    t.s(t.L('stock = 15'),v); v.stock=15;
+    t.s(t.L('box_size = 5'),v); v.box_size=5;
+    t.s(t.L('"Packing started'),v); t.o('Packing started\n');
+    t.loop();
+    t.s(t.L('while stock > 0'),v);
+    t.s(t.L('print("Box packed'),v); t.o('Box packed, stock before packing: 15\n');
+    t.s(t.L('stock - box_size'),v);
+  }
+},
+{
+  id:'y09', file:'09_early_return.py', title:'Return inside a loop', kind:'runtime', group:'Logic errors', stepInto:true,
+  scenario:'The function find_highest should return the highest mark in a list. For the marks 54, 72, 91 and 65 the script should print "Highest mark: 91".',
+  code:String.raw`# Finds the highest mark in a list.
+
+def find_highest(marks):
+    highest = marks[0]
+    for mark in marks:
+        if mark > highest:
+            highest = mark
+        return highest
+
+
+results = [54, 72, 91, 65]
+
+top = find_highest(results)
+
+print("Marks checked:", len(results))
+print("Highest mark:", top)`,
+  run:['Marks checked: 4','Highest mark: 54'],
+  fixedRun:['Marks checked: 4','Highest mark: 91'],
+  hyps:[
+    {t:'The comparison on line 6 should use < instead of >.'},
+    {t:'highest should start at 0 instead of marks[0].'},
+    {t:'The return statement is inside the loop, so the function ends during the first pass.',ok:true},
+    {t:'The list is passed to the function in the wrong order.'}
+  ],
+  cause:'The return on line 8 is indented to the same level as the if, which places it inside the for loop. The function therefore returns at the end of the very first iteration, having looked at only one mark.',
+  invest:'Set a breakpoint on the call and use <b>Step Into</b> (F11), then step through the function. Count how many times the for statement on line 5 is reached before the function returns.',
+  bp:'top = find_highest', watch:['mark','highest','mark > highest'],
+  hints:[
+    'The answer printed is the first mark in the list. How many marks did the function actually examine?',
+    'Step through the function. After the first pass of the loop, where does execution go?',
+    'Indentation decides which block a statement belongs to. Which block is line 8 in, and which should it be in?'
+  ],
+  fault:'return highest',
+  near:{'if mark > highest':'The comparison is correct for finding a maximum. The trouble is that it is only ever made once.','highest = marks[0]':'Starting with the first mark is a sound way to find a maximum. Follow what happens after this line.','for mark in marks':'The loop is written correctly and would visit every mark, if it were allowed to continue.'},
+  acceptRe:/^4$/,
+  typePrompt:'The statement on line 8 is correct but indented too far. Type the number of spaces that should come before it:',
+  fixes:[
+    {d:'Indent line 8 by twelve spaces, so that it lines up with highest = mark.',fb:'The return would then be inside the if as well. The function would return the first time a larger mark was found (72), or nothing at all if none was.'},
+    {d:'Indent line 8 by four spaces, so that it lines up with the for statement.',ok:true,fb:'The return now comes after the loop instead of inside it, so every mark is examined before the answer is handed back.'},
+    {d:'Remove all indentation from line 8.',fb:'A return statement outside any function is a SyntaxError.'},
+    {d:'Replace return with print on line 8.',fb:'Each pass would print a running value, and the function would hand back None, so the script would report "Highest mark: None".'}
+  ],
+  patch:c=>rep(c,'        return highest','    return highest'),
+  explain:'In Python the position of a statement is part of its meaning. Indented by eight spaces, <code>return highest</code> belonged to the body of the <code>for</code> loop, so it ran at the end of the first pass and ended the function there. No error was raised: the code is valid, it simply does something different from what was intended. Stepping made this plain, because execution left the function without ever returning to line 5.',
+  habit:'When a loop seems to stop early, step through it and check which block every return and break statement really belongs to.',
+  trace(t){
+    const m={}, call=t.L('top = find_highest'), fn='find_highest(marks)';
+    t.s(t.L('def find_highest'),m);
+    t.s(t.L('results = ['),m); m.results=[54,72,91,65];
+    t.s(call,m);
+    const f={marks:[54,72,91,65]}, fr=l=>t.sf([{fn:'<module>',l:call,v:m},{fn:fn,l:l,v:f}]);
+    fr(t.L('highest = marks[0]')); f.highest=54;
+    fr(t.L('for mark in marks')); f.mark=54;
+    fr(t.L('if mark > highest'));
+    fr(t.L('return highest'));
+    m.top=54;
+    t.s(t.L('"Marks checked'),m); t.o('Marks checked: 4\n');
+    t.s(t.L('"Highest mark'),m); t.o('Highest mark: 54\n');
+  }
+},
+{
+  id:'y10', file:'10_string_methods.py', title:'Discarded method result', kind:'runtime', group:'Logic errors',
+  scenario:'The script should tidy a username typed into a sign-up form by removing the spaces at either end. It should print "Stored: [priya.shah]" and "Username accepted".',
+  code:String.raw`# Tidies a username typed into a sign-up form.
+# Spaces at either end should be removed.
+
+raw_name = "  priya.shah  "
+username = raw_name
+
+username.strip()
+
+print("Typed:", "[" + raw_name + "]")
+print("Stored:", "[" + username + "]")
+
+if username == "priya.shah":
+    print("Username accepted")
+else:
+    print("Username not recognised")`,
+  run:['Typed: [  priya.shah  ]','Stored: [  priya.shah  ]','Username not recognised'],
+  fixedRun:['Typed: [  priya.shah  ]','Stored: [priya.shah]','Username accepted'],
+  hyps:[
+    {t:'strip() only removes spaces from the left-hand end.'},
+    {t:'strip() produces a new string, and line 7 does nothing with it, so username is unchanged.',ok:true},
+    {t:'username and raw_name are the same variable, so neither can be changed.'},
+    {t:'The comparison on line 12 ignores spaces.'}
+  ],
+  cause:'Strings cannot be modified in place. username.strip() returns a new, tidied string, but line 7 does not store it anywhere, so the result is thrown away.',
+  invest:'Set a breakpoint on line 7 and step over it. Compare <b>username</b> in VARIABLES before and after that step, and compare it with the watch expression below.',
+  bp:'username.strip()', watch:['username.strip()','username == "priya.shah"','len(username)'],
+  hints:[
+    'Step over line 7. Did username change?',
+    'The watch expression username.strip() shows the right answer. Where does that answer go when line 7 runs?',
+    'A string method hands back a new string. Something has to receive it.'
+  ],
+  fault:'username.strip()',
+  near:{'username = raw_name':'This assignment is correct: username starts out as a copy of what was typed. The fault is in the step that should tidy it.','if username ==':'The comparison is exact, as it should be. The value being compared still contains spaces.'},
+  fixes:[
+    {c:'strip(username)',fb:'strip is a method of a string, not a stand-alone function, so this raises a NameError.'},
+    {c:'username.strip',fb:'Without brackets the method is not even called. The line merely refers to it and then discards the reference.'},
+    {c:'username = username.strip()',ok:true,fb:'The new string returned by strip() is now stored back in username.'},
+    {c:'raw_name = username.strip()',fb:'The tidied text would be stored in the wrong variable, so username would still contain the spaces.'}
+  ],
+  accept:['username = raw_name.strip()','username = str.strip(username)'],
+  wall:{tool:'pylint',at:'username.strip()',tok:'username',msg:'W0106: Expression "username.strip()" is assigned to nothing (expression-not-assigned)'},
+  patch:c=>rep(c,'\nusername.strip()\n','\nusername = username.strip()\n'),
+  explain:'Python strings are <em>immutable</em>: once created, a string can never be changed. Methods such as <code>strip()</code>, <code>lower()</code> and <code>replace()</code> therefore cannot alter the string they are called on. Instead they return a new string, and it is up to the program to keep it. Line 7 called the method correctly and then let the result go. This differs from list methods such as <code>append()</code> and <code>sort()</code>, which do change the list in place, and the difference is a frequent source of confusion.',
+  habit:'After calling a method, ask whether it changes the object or returns a new one, and step over the line to confirm.',
+  trace(t){
+    const v={};
+    t.s(t.L('raw_name = '),v); v.raw_name='  priya.shah  ';
+    t.s(t.L('username = raw_name'),v); v.username='  priya.shah  ';
+    t.s(t.L('username.strip()'),v);
+    t.s(t.L('print("Typed:"'),v); t.o('Typed: [  priya.shah  ]\n');
+    t.s(t.L('print("Stored:"'),v); t.o('Stored: [  priya.shah  ]\n');
+    t.s(t.L('if username =='),v);
+    t.s(t.L('"Username not recognised'),v); t.o('Username not recognised\n');
+  }
+},
+{
+  id:'y11', file:'11_list_alias.py', title:'Two names for one list', kind:'runtime', group:'Lists and functions',
+  scenario:'The script should keep a copy of the original scores (54, 72 and 91) and then add a bonus of 5 to each score. It should print the new scores and the unchanged originals, with no warning.',
+  code:String.raw`# Keeps a copy of the original scores before applying a bonus.
+# The original list must stay unchanged.
+
+scores = [54, 72, 91]
+original = scores
+bonus = 5
+
+for i in range(len(scores)):
+    scores[i] = scores[i] + bonus
+
+print("With bonus:", scores)
+print("Original:", original)
+
+if original == scores:
+    print("Warning: the original scores were lost")`,
+  run:['With bonus: [59, 77, 96]','Original: [59, 77, 96]','Warning: the original scores were lost'],
+  fixedRun:['With bonus: [59, 77, 96]','Original: [54, 72, 91]'],
+  hyps:[
+    {t:'The loop adds the bonus to both lists deliberately.'},
+    {t:'Line 5 does not copy the list: it gives the same list a second name, so a change made through one name shows through the other.',ok:true},
+    {t:'print() displays the wrong variable on line 12.'},
+    {t:'The bonus is added twice to each score.'}
+  ],
+  cause:'original = scores does not create a second list. It makes original refer to the very same list object as scores, so every change made through scores is also seen through original.',
+  invest:'Set a breakpoint inside the loop and step through one iteration. Watch <b>scores</b> and <b>original</b> in VARIABLES at the moment line 9 is executed.',
+  bp:'scores[i] = scores[i]', watch:['original == scores','original[0]'],
+  hints:[
+    'Step over line 9 once. How many of the variables in VARIABLES are highlighted as changed?',
+    'Line 9 mentions only scores. Why would original change at the same moment?',
+    'An assignment between two list variables copies the reference, not the contents. A list has a method for making a real copy.'
+  ],
+  fault:'original = scores',
+  near:{'scores[i] = scores[i]':'This line changes scores exactly as intended. The question is why original changes with it.','print("Original:"':'The print statement displays original faithfully. Its contents had already changed.'},
+  fixes:[
+    {c:'original = [scores]',fb:'This makes a new list whose single element is the same scores list, so the original values are still not preserved.'},
+    {c:'original == scores',fb:'== is a comparison. It would not create the variable original at all, and line 12 would then raise a NameError.'},
+    {c:'original = scores.copy()',ok:true,fb:'copy() builds a new list with the same elements, so later changes to scores no longer affect original.'},
+    {c:'original = scores[0]',fb:'This stores only the first score, a single number, instead of a copy of the whole list.'}
+  ],
+  accept:['original = scores[:]','original = list(scores)','original = [score for score in scores]','original = [s for s in scores]'],
+  patch:c=>rep(c,'original = scores\n','original = scores.copy()\n'),
+  explain:'A Python variable is a name attached to an object, not a box containing one. <code>original = scores</code> attached a second name to the same list, a situation known as <em>aliasing</em>. Because lists are mutable, the change made on line 9 was visible through both names: in the debugger the two variables changed at the same instant. <code>scores.copy()</code>, <code>scores[:]</code> and <code>list(scores)</code> all create a genuinely separate list. Numbers and strings do not show this behaviour, because they can never be changed in place.',
+  habit:'When a variable changes without being assigned to, look for another name that refers to the same list or dictionary.',
+  trace(t){
+    const v={}, head=t.L('for i in range'), body=t.L('scores[i] = scores[i]');
+    const cur=[54,72,91];
+    t.s(t.L('scores = ['),v); v.scores=cur.slice();
+    t.s(t.L('original = scores'),v); v.original=cur.slice();
+    t.s(t.L('bonus = 5'),v); v.bonus=5;
+    for(let i=0;i<3;i++){
+      t.s(head,v); v.i=i;
+      t.s(body,v); cur[i]+=5; v.scores=cur.slice(); v.original=cur.slice();
+    }
+    t.s(head,v);
+    t.s(t.L('print("With bonus:"'),v); t.o('With bonus: [59, 77, 96]\n');
+    t.s(t.L('print("Original:"'),v); t.o('Original: [59, 77, 96]\n');
+    t.s(t.L('if original == scores'),v);
+    t.s(t.L('"Warning:'),v); t.o('Warning: the original scores were lost\n');
+  }
+},
+{
+  id:'y12', file:'12_mutable_default.py', title:'Mutable default argument', kind:'runtime', group:'Lists and functions', stepInto:true,
+  scenario:'The script should build a separate shopping basket for each of two customers. The first basket should contain only "Notebook" and the second only "Pen".',
+  code:String.raw`# Builds a separate shopping basket for each customer.
+# Each customer should end up with one item.
+
+def add_item(item, basket=[]):
+    basket.append(item)
+    return basket
+
+
+first_basket = add_item("Notebook")
+second_basket = add_item("Pen")
+
+print("First customer:", first_basket)
+print("Second customer:", second_basket)
+print("Baskets created: 2")
+print("End of orders")`,
+  run:["First customer: ['Notebook', 'Pen']","Second customer: ['Notebook', 'Pen']",'Baskets created: 2','End of orders'],
+  fixedRun:["First customer: ['Notebook']","Second customer: ['Pen']",'Baskets created: 2','End of orders'],
+  hyps:[
+    {t:'append() adds each item to the list twice.'},
+    {t:'The two print statements display the same variable.'},
+    {t:'The default list is created once and reused by every call, so both customers share one basket.',ok:true},
+    {t:'The second call overwrites the first variable.'}
+  ],
+  cause:'The default value basket=[] is created once, when the def statement is executed, not each time the function is called. Every call that relies on the default receives that same list, so items accumulate in it.',
+  invest:'Set a breakpoint on the first call and use <b>Step Into</b> (F11) for both calls. On entering the function the second time, look at <b>basket</b> before line 5 has run.',
+  bp:'first_basket = add_item', watch:['len(basket)','basket'],
+  hints:[
+    'Step into the second call. What does basket contain before anything has been appended?',
+    'Neither call passes a basket, so both rely on the default. How many times is that default list created?',
+    'A default value is evaluated once, when the function is defined. A mutable default such as [] is therefore shared between calls.'
+  ],
+  fault:'def add_item',
+  near:{'basket.append(item)':'append() does exactly what it should. The question is which list it is appending to on the second call.','second_basket = add_item':'The call is written correctly. Step into it and look at basket on arrival.'},
+  typeStart:'def add_item(item, basket=[]):',
+  acceptRe:/^def add_item\(item,basket=None\):$/,
+  typePrompt:'Retype line 4 with a safe default value (the editor will then add two lines that create a new list whenever no basket is supplied):',
+  fixes:[
+    {d:'Change the default to basket=list() on line 4.',fb:'list() is also evaluated only once, when the function is defined, so the same shared list would result.'},
+    {d:'Add basket.clear() as the first line of the function.',fb:'The shared list would be emptied on every call, so the first customer\'s basket would lose its item when the second customer was served.'},
+    {d:'Change the default to basket=None on line 4, and create a new list inside the function when basket is None.',ok:true,fb:'None cannot be modified, so it is safe to share. A fresh list is now created inside the function on each call that needs one.'},
+    {d:'Change line 10 to add_item("Pen", []).',fb:'That call would then work, but the trap would remain in the function for every other caller.'}
+  ],
+  wall:{tool:'pylint',at:'def add_item',tok:'basket',msg:'W0102: Dangerous default value [] as argument (dangerous-default-value)'},
+  patch:c=>rep(c,'def add_item(item, basket=[]):\n','def add_item(item, basket=None):\n    if basket is None:\n        basket = []\n'),
+  explain:'Default argument values are evaluated <em>once</em>, at the moment the <code>def</code> statement runs. The list <code>[]</code> on line 4 was therefore a single object stored with the function, and both calls appended to it. The first basket even changed after it had been returned, because <code>first_basket</code> was just another name for that same list. The standard remedy is to use <code>None</code> as the default and create the list inside the function. This is one of the best-known surprises in Python, and the debugger exposes it at once: on the second call, <code>basket</code> arrives already containing an item.',
+  habit:'Never use a list or dictionary as a default argument value: use None and create the object inside the function.',
+  trace(t){
+    const m={}, c1=t.L('first_basket = add_item'), c2=t.L('second_basket = add_item'), fn='add_item(item, basket)';
+    const a=t.L('basket.append(item)'), b=t.L('return basket');
+    t.s(t.L('def add_item'),m);
+    t.s(c1,m);
+    let f={item:'Notebook',basket:[]};
+    t.sf([{fn:'<module>',l:c1,v:m},{fn:fn,l:a,v:f}]); f.basket=['Notebook'];
+    t.sf([{fn:'<module>',l:c1,v:m},{fn:fn,l:b,v:f}]);
+    m.first_basket=['Notebook'];
+    t.s(c2,m);
+    f={item:'Pen',basket:['Notebook']};
+    t.sf([{fn:'<module>',l:c2,v:m},{fn:fn,l:a,v:f}]); f.basket=['Notebook','Pen']; m.first_basket=['Notebook','Pen'];
+    t.sf([{fn:'<module>',l:c2,v:m},{fn:fn,l:b,v:f}]);
+    m.second_basket=['Notebook','Pen'];
+    t.s(t.L('"First customer'),m); t.o("First customer: ['Notebook', 'Pen']\n");
+    t.s(t.L('"Second customer'),m); t.o("Second customer: ['Notebook', 'Pen']\n");
+    t.s(t.L('"Baskets created'),m); t.o('Baskets created: 2\n');
+    t.s(t.L('"End of orders'),m); t.o('End of orders\n');
+  }
+},
+{
+  id:'y13', file:'13_local_scope.py', title:'Local and global names', kind:'runtime', group:'Lists and functions', stepInto:true,
+  endMsg:"Exception has occurred: UnboundLocalError. cannot access local variable 'visits' where it is not associated with a value. The script stopped on line 9, inside record_visit().",
+  scenario:'The script should count page visits in a module-level variable. After two visits it should print "Visit to home", "Visit to contact" and "Total visits: 2".',
+  code:String.raw`# Counts how many times a page has been visited.
+# The running total is kept in a module-level variable.
+
+visits = 0
+
+
+def record_visit(page):
+    print("Visit to", page)
+    visits += 1
+
+
+record_visit("home")
+record_visit("contact")
+
+print("Total visits:", visits)`,
+  run:['Visit to home','Traceback (most recent call last):','  File "13_local_scope.py", line 12, in <module>','    record_visit("home")','    ~~~~~~~~~~~~^^^^^^^^','  File "13_local_scope.py", line 9, in record_visit','    visits += 1','    ^^^^^^',"UnboundLocalError: cannot access local variable 'visits' where it is not associated with a value"],
+  fixedRun:['Visit to home','Visit to contact','Total visits: 2'],
+  hyps:[
+    {t:'visits is misspelt inside the function.'},
+    {t:'The function is called before visits has been given a value.'},
+    {t:'Assigning to visits inside the function makes it a new local variable, which has no value when line 9 tries to add to it.',ok:true},
+    {t:'The += operator cannot be used on a variable that holds 0.'}
+  ],
+  cause:'Any name that a function assigns to is treated as local to that function. Because of visits += 1, visits inside record_visit is a separate local variable with no value, so reading it in order to add 1 fails.',
+  invest:'Set a breakpoint on the first call and use <b>Step Into</b> (F11). Compare what VARIABLES shows for <b>visits</b> in the record_visit frame with what it shows in the &lt;module&gt; frame.',
+  bp:'record_visit("home")', watch:['visits','page'],
+  hints:[
+    'The message speaks of a local variable. Line 4 creates a variable named visits, but in which scope?',
+    'Select each frame in CALL STACK in turn. Does visits have a value in both?',
+    'A function may read a module-level variable freely. To assign to one, it must first declare that the name is global.'
+  ],
+  fault:'visits += 1',
+  near:{'visits = 0':'This line creates the module-level variable correctly, and it does run first. The difficulty is that the function is not using it.','def record_visit':'The function header is correct. Look at what the body does with the name visits.'},
+  acceptRe:/^global visits$/,
+  typePrompt:'Type the statement that must be added as the first line inside the function, so that line 9 updates the module-level variable:',
+  fixes:[
+    {d:'Change line 9 to visits = visits + 1.',fb:'This is the same operation written out in full. It still assigns to visits, so the name is still local and still has no value.'},
+    {d:'Add visits = 0 as the first line inside the function.',fb:'The error would disappear, but the function would count from 0 in its own local variable on every call, and the module-level total would stay at 0.'},
+    {d:'Add global visits as the first line inside the function.',ok:true,fb:'The global statement tells Python that visits inside the function means the module-level variable, so line 9 now updates it.'},
+    {d:'Move line 4 so that it comes after the function definition.',fb:'The order of the two makes no difference: the name would still be local inside the function.'}
+  ],
+  wall:{tool:'pylint',at:'visits += 1',tok:'visits',msg:"E0601: Using variable 'visits' before assignment (used-before-assignment)"},
+  patch:c=>rep(c,'    print("Visit to", page)\n','    global visits\n    print("Visit to", page)\n'),
+  explain:'A Python function can <em>read</em> a module-level variable without any ceremony. However, if the function <em>assigns</em> to a name anywhere in its body, Python decides in advance that the name is local for the whole function. <code>visits += 1</code> is such an assignment, so the function had its own <code>visits</code>, which had no value at the moment the line tried to read it. The <code>global</code> statement resolves this. A cleaner design, which avoids shared state altogether, is to pass the count in as a parameter and return the new value.',
+  habit:'When a name works outside a function but fails inside it, compare the frames in the CALL STACK to see which scope each variable lives in.',
+  trace(t){
+    const m={}, call=t.L('record_visit("home")'), fn='record_visit(page)';
+    t.s(t.L('visits = 0'),m); m.visits=0;
+    t.s(t.L('def record_visit'),m);
+    t.s(call,m);
+    const f={page:'home',visits:R('(local name with no value yet)')};
+    t.sf([{fn:'<module>',l:call,v:m},{fn:fn,l:t.L('print("Visit to"'),v:f}]); t.o('Visit to home\n');
+    t.sf([{fn:'<module>',l:call,v:m},{fn:fn,l:t.L('visits += 1'),v:f}]);
+  }
+},
+{
+  id:'y14', file:'14_capstone_two_faults.py', title:'Capstone: two faults', kind:'runtime', group:'Capstone', stillWrong:true,
+  scenario:'The script should print the subtotal for a stationery order (4 notebooks at 2.50, 10 pens at 1.20 and 2 folders at 3.00) and the total including VAT at 20%. The expected output is Subtotal: 28.0 and Total with VAT: 33.6. This script contains two separate faults. Begin with this observation: the subtotal printed is the value of a single item.',
+  code:String.raw`# Prints the subtotal for a stationery order and the total including VAT.
+
+items = [
+    {"name": "Notebook", "price": 2.50, "quantity": 4},
+    {"name": "Pen", "price": 1.20, "quantity": 10},
+    {"name": "Folder", "price": 3.00, "quantity": 2},
+]
+vat_rate = 0.20
+subtotal = 0
+
+for i in range(1, len(items)):
+    subtotal = items[i]["price"] * items[i]["quantity"]
+
+total = subtotal + subtotal * vat_rate
+
+print("Items ordered:", len(items))
+print("Subtotal:", subtotal)
+print("Total with VAT:", round(total, 2))`,
+  run:['Items ordered: 3','Subtotal: 6.0','Total with VAT: 7.2'],
+  fixedRun:['Items ordered: 3','Subtotal: 18.0','Total with VAT: 21.6'],
+  hyps:[
+    {t:'The prices are stored as text and cannot be multiplied.'},
+    {t:'Each pass of the loop replaces the subtotal instead of adding to it, so only the last item counts.',ok:true},
+    {t:'The VAT calculation on line 14 reduces the subtotal.'},
+    {t:'The quantity key is misspelt on line 12.'}
+  ],
+  cause:'Line 12 uses = where += was needed. Each iteration overwrites subtotal with the value of the current item, so after the loop it holds only the last item (2 folders at 3.00, worth 6.0).',
+  invest:'Set a breakpoint inside the loop and step through every pass. Follow <b>subtotal</b> in VARIABLES and compare it with the watch expression, which shows the value of the current item alone.',
+  bp:'subtotal = items', watch:['items[i]["name"]','items[i]["price"] * items[i]["quantity"]'],
+  hints:[
+    '6.0 is exactly the value of one line of the order. Which one?',
+    'Step through two passes of the loop. Does subtotal ever grow, or is it simply replaced?',
+    'An accumulator must add to its previous value. Look at the assignment operator on line 12.'
+  ],
+  fault:'subtotal = items',
+  near:{'for i in range':'Well spotted: this line does deserve suspicion and it will be revisited. It does not, however, explain why the subtotal equals a single item. Deal with that first.','subtotal = 0':'Starting the accumulator at 0 is correct. Follow what happens to it inside the loop.'},
+  fixes:[
+    {c:'subtotal == items[i]["price"] * items[i]["quantity"]',fb:'== is a comparison. Nothing would be stored, and the subtotal would remain 0.'},
+    {c:'subtotal += items[i]["price"] * items[i]["quantity"]',ok:true,fb:'The += operator adds the value of each item to the running subtotal instead of replacing it.'},
+    {c:'subtotal = subtotal * items[i]["price"] * items[i]["quantity"]',fb:'The subtotal starts at 0, and 0 multiplied by anything is 0.'},
+    {c:'subtotal += items[i]["price"] + items[i]["quantity"]',fb:'The accumulation is now right, but the price and the quantity are added together instead of multiplied.'}
+  ],
+  accept:['subtotal = subtotal + items[i]["price"] * items[i]["quantity"]','subtotal += items[i]["quantity"] * items[i]["price"]'],
+  patch:c=>rep(c,'    subtotal = items[i]','    subtotal += items[i]'),
+  explain:'With a plain <code>=</code>, each pass of the loop threw away the running subtotal and stored the value of the current item instead, so only the last item survived. Accumulating requires <code>+=</code>. One fault has now been removed and the subtotal has changed, but a changed answer is not necessarily a correct one.',
+  habit:'After every fix, run the script again and check all of the output against the expected values.',
+  trace:capTrace(false),
+  part2:{
+    scenario:'The first fault has been fixed and the subtotal now accumulates. It should be 28.0 with a total of 33.6, but the script prints 18.0 and 21.6. Form a fresh hypothesis for this second fault.',
+    run:['Items ordered: 3','Subtotal: 18.0','Total with VAT: 21.6'], runNote:null,
+    fixedRun:['Items ordered: 3','Subtotal: 28.0','Total with VAT: 33.6'],
+    hyps:[
+      {t:'The VAT calculation on line 14 is wrong.'},
+      {t:'One of the prices in the list has been typed incorrectly.'},
+      {t:'The loop starts at index 1, so the first item is never added to the subtotal.',ok:true},
+      {t:'len(items) returns 2 instead of 3.'}
+    ],
+    cause:'range(1, len(items)) produces 1 and 2, so items[0] (4 notebooks at 2.50, worth 10.0) is never added. The subtotal is 18.0 instead of 28.0.',
+    invest:'Pause inside the loop on its first pass and read the value of <b>i</b>. Use the watch expression to see which item is being processed, and count the passes.',
+    bp:'subtotal += items', watch:['i','items[i]["name"]'],
+    hints:[
+      'The subtotal is 10 too low. Which item in the order is worth exactly 10?',
+      'On the first pass through the loop body, what is the value of i, and which item is that?',
+      'List indexes begin at 0. Look at the first number given to range() on line 11.'
+    ],
+    fault:'for i in range',
+    near:{'total = subtotal':'The VAT calculation is sound: 18.0 plus 20% is 21.6. The subtotal going into it is wrong.','subtotal += items':'This line is now correct for the item it is given. Consider which items it is given.'},
+    fixes:[
+      {c:'for i in range(0, len(items) + 1):',fb:'The first item is now included, but the loop also asks for items[3], which does not exist, and an IndexError would follow.'},
+      {c:'for i in range(1, len(items) + 1):',fb:'The first item is still skipped, and the non-existent items[3] is now requested as well.'},
+      {c:'for i in range(len(items)):',ok:true,fb:'With no starting value, range() begins at 0, so the loop visits indexes 0 to 2 and covers all three items.'},
+      {c:'for i in range(2, len(items)):',fb:'Two items would now be skipped instead of one.'}
+    ],
+    accept:['for i in range(0, len(items)):','for i in range(3):','for i in range(0, 3):'],
+    patch:c=>rep(c,'range(1, len(items))','range(len(items))'),
+    explain:'The loop began at index 1, so the first item was silently left out of the subtotal. This fault was present from the start, and it produced no error at all: Python had nothing to complain about. Real scripts often contain several faults, and each fix changes the evidence, so the cycle of run, hypothesise and investigate has to begin again after every change. Looping over the list directly, with <code>for item in items:</code>, would have made this fault impossible.',
+    habit:'Fix one fault at a time, then re-run and form a fresh hypothesis before changing anything else.',
+    trace:capTrace(true)
+  }
+}
+];
+
+/* Prepare exercises: resolve lines and build traces */
+function prep(e){
+  const lines=e.code.split('\n');
+  e.lines=lines;
+  const L=(sub,nth)=>{ let c=0; for(let i=0;i<lines.length;i++){ if(lines[i].indexOf(sub)>=0&&++c===(nth||1)) return i+1; } throw new Error('Line not found: '+sub+' in '+e.file); };
+  const steps=[]; let loopTo=null;
+  e.trace({
+    L:L,
+    s(line,vars,fn){ steps.push({l:line,f:[{fn:fn||'<module>',l:line,v:clone(vars)}],o:''}); },
+    sf(frames){ steps.push({l:frames[frames.length-1].l,f:clone(frames),o:''}); },
+    o(text){ steps[steps.length-1].o+=text; },
+    loop(){ loopTo=steps.length; }
+  });
+  e.steps=steps; e.loopTo=loopTo;
+  e.faultLine=L(e.fault);
+  e.bpLine=L(e.bp);
+  e.nearLines={}; Object.keys(e.near||{}).forEach(k=>{ e.nearLines[L(k)]=e.near[k]; });
+  if(e.diag){ e.diag.line=L(e.diag.at); e.diag.col=lines[e.diag.line-1].indexOf(e.diag.tok)+1; }
+  e.fixedCode=e.patch(e.code);
+  if(e.fixedCode===e.code) throw new Error('Patch failed for '+e.file);
+  e.acceptN=(e.accept||[]).concat(e.fixes.filter(o=>o.ok&&o.c).map(o=>o.c)).map(norm);
+  if(e.wall){ e.wall.line=L(e.wall.at); e.wall.col=lines[e.wall.line-1].indexOf(e.wall.tok)+1; }
+}
+EX.forEach((e,i)=>{
+  e.file=String(i+1).padStart(2,'0')+e.file.replace(/^\d+/,'');
+  prep(e);
+  if(e.part2){
+    const p=Object.assign({},e,{wall:null,cond:null},e.part2,{code:e.fixedCode,isP2:true,stillWrong:false});
+    delete p.part2;
+    prep(p); e.p2=p;
+  }
+});
+const MAX=EX.length*10;
+
+/* ---------- state ---------- */
+const STAGES=['run','hyp','inv','loc','fix','rev'];
+const STAGE_NAMES=['Scenario','Run','Hypothesise','Investigate','Locate','Fix','Reveal'];
+const S={tab:'welcome',view:'debug',sideOpen:window.innerWidth>1150,cur:0,panel:'terminal',cursor:1,
+  progress:store.get('ydl.progress',{}),ex:{}};
+const dbg={active:false,running:false,i:0,frame:0,prev:null};
+const cur=()=>{ const e=EX[S.cur], s=S.ex[e.id]; return s&&s.part===2?e.p2:e; };
+function fresh(){ return {stage:'run',part:1,p1:null,hyp:null,selfRate:null,hints:0,steps:0,locTries:0,fixTries:0,bps:[],bpCond:{},watches:[],term:[],con:[],out:[],ran:false,fixed:false,sel:null,found:null,locMsg:null,fixMsg:null,fixSel:null,fixMode:'type',fixDraft:null,fixText:null,result:null}; }
+function st(){ const e=EX[S.cur]; return S.ex[e.id]||(S.ex[e.id]=fresh()); }
+function codeOf(e,s){
+  if(!s.fixed) return e.code;
+  if(s.fixText&&!e.acceptRe){ const ls=e.code.split('\n'); ls[e.faultLine-1]=ls[e.faultLine-1].match(/^\s*/)[0]+s.fixText; return ls.join('\n'); }
+  return e.fixedCode;
+}
+function hypLabel(h){ return {match:'Matched',miss:'Did not match','own-match':'Matched (self-assessed)','own-part':'Partly matched (self-assessed)','own-miss':'Did not match (self-assessed)',own:'Own words, not yet self-assessed'}[h]||''; }
+function bpHit(s,e,step){
+  if(s.bps.indexOf(step.l)<0) return false;
+  const c=s.bpCond[step.l]; if(!c) return true;
+  try{ const r=evalWatch(c,step.f[step.f.length-1].v,e.garbage); return toBool(r); }
+  catch(x){ con('The condition on the line '+step.l+' breakpoint could not be evaluated ('+x+'), so execution paused.','info'); return true; }
+}
+function totalScore(){ return EX.reduce((a,e)=>a+((S.progress[e.id]||{}).score||0),0); }
+function doneCount(){ return EX.filter(e=>(S.progress[e.id]||{}).done).length; }
+
+let toastTimer=null;
+function toast(msg){ const t=$('toast'); t.textContent=msg; clearTimeout(toastTimer); toastTimer=setTimeout(()=>{t.textContent='';},5000); }
+function say(msg){ $('live').textContent=msg; }
+
+/* ---------- theme ---------- */
+function setTheme(th,save){
+  document.documentElement.setAttribute('data-theme',th);
+  const label='Theme: '+(th==='dark'?'Dark':'Light');
+  $('themeTop').textContent=label; $('themeBottom').textContent=label;
+  const al='Switch to '+(th==='dark'?'light':'dark')+' theme';
+  $('themeTop').setAttribute('aria-label',al); $('themeBottom').setAttribute('aria-label',al);
+  if(save) store.set('ydl.theme',th);
+}
+(function(){
+  let th=store.get('ydl.theme',null);
+  if(th!=='dark'&&th!=='light'){
+    let light=false; try{ light=window.matchMedia('(prefers-color-scheme: light)').matches; }catch(e){}
+    th=light?'light':'dark';
+  }
+  setTheme(th,false);
+})();
+
+/* ---------- icons and toolbar ---------- */
+const ICON={
+  cont:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 2H4v12H2.5zM6 2l8 6-8 6z"/></svg>',
+  pause:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h3v12H4zM9 2h3v12H9z"/></svg>',
+  over:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8.5a6 6 0 0 1 10.6-3.9V2H14v5H9V5.6h2.5A4.6 4.6 0 0 0 3.4 8.5z"/><circle cx="8" cy="12.5" r="2"/></svg>',
+  into:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.25 1h1.5v6.1l2.2-2.2L12 5.95 8 10 4 5.95 5.05 4.9l2.2 2.2z"/><circle cx="8" cy="13" r="2"/></svg>',
+  out:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.25 10h1.5V3.9l2.2 2.2L12 5.05 8 1 4 5.05 5.05 6.1l2.2-2.2z"/><circle cx="8" cy="13" r="2"/></svg>',
+  restart:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M12.6 8A4.6 4.6 0 1 1 11 4.5L9.3 6.2H14V1.5l-1.9 1.9A6.1 6.1 0 1 0 14.1 8z"/></svg>',
+  stop:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3h10v10H3z"/></svg>'
+};
+const TB=[['cont','Continue (F5)','c-blue'],['over','Step Over (F10)','c-blue'],['into','Step Into (F11)','c-blue'],['out','Step Out (Shift+F11)','c-blue'],['restart','Restart (Ctrl+Shift+F5)','c-green'],['stop','Stop (Shift+F5)','c-red']];
+$('dbgbar').innerHTML='<button class="runbtn" data-act="run" data-tip="Run without debugging" aria-label="Run program without debugging">&#9654; Run</button><span class="sep" aria-hidden="true"></span>'+
+  TB.map(b=>'<button id="tb-'+b[0]+'" class="'+b[2]+'" data-act="'+b[0]+'" data-tip="'+b[1]+'" aria-label="'+b[1]+'">'+ICON[b[0]]+'</button>').join('');
+function renderToolbar(){
+  const code=S.tab==='code', a=dbg.active, r=dbg.running, c=$('tb-cont');
+  const tip=!a?'Start Debugging (F5)':r?'Pause (F6)':'Continue (F5)';
+  c.dataset.tip=tip; c.setAttribute('aria-label',tip); c.innerHTML=r?ICON.pause:ICON.cont;
+  c.disabled=!code;
+  ['over','into','out'].forEach(k=>{ $('tb-'+k).disabled=!code||!a||r; });
+  ['restart','stop'].forEach(k=>{ $('tb-'+k).disabled=!code||!a; });
+  document.querySelector('.runbtn').disabled=!code;
+}
+
+/* ---------- rendering: tabs, editor, documents ---------- */
+function renderTabs(){
+  const tabs=[['welcome','Welcome'],['code',cur().file],['toolkit','Debugging Toolkit'],['summary','Summary']];
+  $('tabs').innerHTML=tabs.map(t=>'<button role="tab" data-act="tab" data-tab="'+t[0]+'" aria-selected="'+(S.tab===t[0])+'" id="tab-'+t[0]+'">'+esc(t[1])+'</button>').join('');
+  const name=tabs.filter(t=>t[0]===S.tab)[0][1];
+  $('winTitle').textContent=name+' - Debugging Lab'; document.title=name+' - Debugging Lab';
+  const isCode=S.tab==='code';
+  $('editor').hidden=!isCode; $('doc').hidden=isCode;
+  if(!isCode){ $('doc').innerHTML=S.tab==='welcome'?docWelcome():S.tab==='toolkit'?docToolkit():docSummary(); $('doc').scrollTop=0; }
+  renderToolbar();
+}
+function pausedStep(){ return dbg.active&&!dbg.running?cur().steps[dbg.i]:null; }
+function renderEditor(scroll){
+  const e=cur(), s=st();
+  const lines=codeOf(e,s).split('\n');
+  const orig=new Set(e.lines.map(x=>x.trim()));
+  const step=pausedStep();
+  const curL=step?step.l:0, frL=step&&dbg.frame<step.f.length-1?step.f[dbg.frame].l:0;
+  const showErr=e.diag&&s.ran&&!s.fixed;
+  $('code').innerHTML=lines.map((ln,i)=>{
+    const n=i+1; let cls='row';
+    if(n===S.cursor) cls+=' cursor';
+    if(s.fixed&&!orig.has(ln.trim())) cls+=' added';
+    if(s.stage==='loc'&&s.sel===n) cls+=' pick';
+    if(!s.fixed&&s.found===n) cls+=' found';
+    if(n===frL) cls+=' frm';
+    if(n===curL) cls+=' cur';
+    if(showErr&&e.diag.line===n) cls+=' haserr';
+    const bp=s.bps.indexOf(n)>=0;
+    return '<div class="'+cls+'" data-line="'+n+'"><button class="gut'+(s.bpCond[n]?' cond':'')+'" tabindex="-1" data-bp="'+n+'" aria-pressed="'+bp+'" aria-label="'+(bp?'Remove':'Add')+' breakpoint on line '+n+(bp&&s.bpCond[n]?' (condition: '+esc(s.bpCond[n])+')':'')+'"><span class="dot"></span></button><span class="ln">'+n+'</span><code class="src">'+(hl(ln)||' ')+'</code></div>';
+  }).join('');
+  if(scroll){ const r=$('code').querySelector('.row.cur')||$('code').querySelector('.row.cursor'); if(r&&r.scrollIntoView) r.scrollIntoView({block:'nearest'}); }
+  $('stPos').textContent='Ln '+S.cursor+', Col 1';
+}
+
+/* ---------- rendering: debug side bar ---------- */
+function frameVals(fr){ const o={}; Object.keys(fr.v).forEach(k=>{ o[k]=fmt(fr.v[k]); }); return o; }
+function renderDebug(){
+  const e=cur(), s=st(), step=pausedStep();
+  let h;
+  if(!dbg.active) h='<p class="empty">Not running. Start debugging to inspect the program state.</p>';
+  else if(dbg.running) h='<p class="empty">Running. Pause the program to inspect variables.</p>';
+  else{
+    const fr=step.f[dbg.frame], top=dbg.frame===step.f.length-1;
+    const prev=top&&dbg.prev&&dbg.prev.fn===fr.fn?dbg.prev.vals:null;
+    const keys=Object.keys(fr.v);
+    h='<div class="scope">'+(e.kind==='compile'?'Parser state (simulated)':'Locals: '+esc(fr.fn.split('(')[0])+(fr.fn.indexOf('(')>=0?'()':''))+'</div><ul>';
+    if(!keys.length) h+='<li class="var"><span class="vv t-raw">(no variables declared yet)</span></li>';
+    keys.forEach(k=>{
+      const x=typeOf(fr.v[k]), val=fmt(x), ch=prev&&prev[k]!==val;
+      h+='<li class="var'+(ch?' chg':'')+'" title="'+esc(TYPE_NAME[x.t]||'')+'"><span class="vn">'+esc(k)+'</span>'+(x.t==='raw'?':':' =')+' <span class="vv t-'+x.t+'">'+esc(brief(x))+'</span>'+(ch?'<span class="sr"> (changed)</span>':'')+'</li>';
+      h+=kids(x,1);
+    });
+    h+='</ul>';
+  }
+  $('vVars').innerHTML=h;
+
+  $('vWatch').innerHTML=s.watches.length?s.watches.map((w,i)=>{
+    let val,cls='t-raw';
+    if(!step) val='not available';
+    else{ try{ const r=evalWatch(w,step.f[dbg.frame].v,e.garbage); val=fmt(r); cls='t-'+r.t; }catch(err){ val=String(err); cls='t-err'; } }
+    return '<li class="rowline"><span class="grow"><span class="vn">'+esc(w)+'</span>: <span class="vv '+cls+'">'+esc(val)+'</span></span><button class="xbtn" data-act="rm-watch" data-i="'+i+'" aria-label="Remove watch '+esc(w)+'">&#10005;</button></li>';
+  }).join(''):'<li class="empty">No watch expressions.</li>';
+
+  if(!dbg.active) h='<p class="empty">Not running.</p>';
+  else if(dbg.running) h='<p class="empty">Running</p>';
+  else h='<p class="empty">Paused</p><ul>'+step.f.map((fr,i)=>i).reverse().map(i=>{
+      const fr=step.f[i];
+      return '<li><button class="frame" data-act="frame" data-i="'+i+'" aria-current="'+(i===dbg.frame)+'"><span>'+esc(fr.fn.split('(')[0])+'</span><small>'+esc(e.file)+' : '+fr.l+'</small></button></li>';
+    }).join('')+'</ul>';
+  $('vStack').innerHTML=h;
+
+  $('vBps').innerHTML=s.bps.length?'<ul>'+s.bps.slice().sort((a,b)=>a-b).map(n=>{
+      const c=s.bpCond[n];
+      let r='<li class="rowline"><span class="bpdot" aria-hidden="true"></span><span class="grow">'+esc(e.file)+' : '+n+(c?' <span class="cond-note">when '+esc(c)+'</span>':'')+'</span><button class="xbtn" data-act="edit-cond" data-line="'+n+'" data-tip="Edit condition" aria-label="Edit condition for breakpoint on line '+n+'">if</button><button class="xbtn" data-act="rm-bp" data-line="'+n+'" aria-label="Remove breakpoint on line '+n+'">&#10005;</button></li>';
+      if(S.editBp===n) r+='<li class="watchform"><label class="sr" for="bpCondIn">Condition for the breakpoint on line '+n+'</label><input type="text" id="bpCondIn" autocomplete="off" placeholder="Condition, e.g. i == 5" value="'+esc(c||'')+'"><button class="btn sec2" data-act="save-cond" data-line="'+n+'">OK</button></li>';
+      return r;
+    }).join('')+'</ul><div class="watchform"><button class="btn sec2" data-act="clear-bps">Remove all</button></div>'
+    :'<p class="empty">No breakpoints. Click in the gutter or press F9.</p>';
+}
+
+/* ---------- rendering: explorer, panel, status ---------- */
+function progressHtml(){
+  const d=doneCount(), sc=totalScore();
+  return '<div class="gmeta"><span>Completed '+d+' of '+EX.length+'</span><span>Score '+sc+' / '+MAX+'</span></div><div class="pbar" role="progressbar" aria-label="Exercises completed" aria-valuemin="0" aria-valuemax="'+EX.length+'" aria-valuenow="'+d+'"><i style="width:'+(d*100/EX.length)+'%"></i></div>';
+}
+function renderExplorer(){
+  let h='<li><button data-act="tab" data-tab="welcome" aria-current="'+(S.tab==='welcome')+'"><span class="ic" aria-hidden="true">i</span>Welcome</button></li>';
+  EX.forEach((e,i)=>{
+    const done=(S.progress[e.id]||{}).done;
+    h+='<li><button data-act="open" data-i="'+i+'" aria-current="'+(S.tab==='code'&&S.cur===i)+'"><span class="ic" aria-hidden="true">py</span>'+esc(e.file)+(done?'<span class="tick" aria-label="completed">&#10003;</span>':'')+'</button></li>';
+  });
+  h+='<li><button data-act="tab" data-tab="toolkit" aria-current="'+(S.tab==='toolkit')+'"><span class="ic" aria-hidden="true">?</span>Debugging Toolkit</button></li>';
+  h+='<li><button data-act="tab" data-tab="summary" aria-current="'+(S.tab==='summary')+'"><span class="ic" aria-hidden="true">#</span>Summary</button></li>';
+  $('files').innerHTML=h;
+  $('progSide').innerHTML=progressHtml();
+  $('stScore').textContent='Score: '+totalScore()+'/'+MAX;
+}
+function problems(){ const e=cur(), s=st(); return e.diag&&s.ran&&!s.fixed?[e.diag]:[]; }
+function renderPanel(){
+  const e=cur(), s=st(), pr=problems();
+  const tabs=[['terminal','Terminal'],['problems','Problems'],['output','Output'],['console','Debug Console']];
+  $('ptabs').innerHTML=tabs.map(t=>'<button role="tab" data-act="ptab" data-p="'+t[0]+'" aria-selected="'+(S.panel===t[0])+'">'+t[1]+(t[0]==='problems'&&pr.length?'<span class="badge">'+pr.length+'</span>':'')+'</button>').join('');
+  const b=$('pbody'); let h;
+  const lines=a=>a.map(l=>'<div class="'+(l.c||'')+'">'+(esc(l.t)||' ')+'</div>').join('');
+  if(S.panel==='terminal') h=lines(s.term)+'<div class="cmd">student@lab:~/debugging$ <span class="note">'+(s.term.length?'':'(press Run to execute '+esc(e.file)+')')+'</span></div>';
+  else if(S.panel==='problems') h=pr.length?pr.map(p=>'<button class="prob" data-act="problem" data-line="'+p.line+'"><span class="sev" aria-hidden="true">&#10006;</span><span>'+esc(p.msg)+' <small>'+esc(e.file)+' [Ln '+p.line+', Col '+p.col+']</small></span></button>').join('')
+      :'<div class="note">'+(s.ran?(e.kind==='runtime'||s.fixed?'No problems have been detected. A script with no syntax errors is only known to be valid Python: logic errors are invisible to the parser.':''):'No problems have been detected yet. Run the script to check it.')+'</div>';
+  else if(S.panel==='output') h=s.out.length?lines(s.out):'<div class="note">No output from Python yet.</div>';
+  else h=s.con.length?lines(s.con):'<div class="note">The debug console shows program output and debugger events during a debug session.</div>';
+  b.innerHTML=h; b.scrollTop=b.scrollHeight;
+  $('stProb').textContent='Errors: '+pr.length;
+}
+function renderStatus(){
+  const step=pausedStep();
+  $('status').classList.toggle('debug',dbg.active);
+  $('stState').textContent=!dbg.active?'Debugging Lab':dbg.running?'Debugging: running':'Debugging: paused at line '+step.l;
+}
+
+/* ---------- rendering: lab guide ---------- */
+function hypText(s,e){ return s.hyp?(s.hyp.own?s.hyp.text:e.hyps[s.hyp.i].t):''; }
+function hintsHtml(e,s){
+  let h='<h3>Hints</h3>';
+  for(let i=0;i<s.hints;i++) h+='<div class="hint"><b>Hint '+(i+1)+':</b> '+e.hints[i]+'</div>';
+  if(s.hints<3) h+='<p><button class="btn sec2" data-act="hint">Show hint '+(s.hints+1)+' of 3</button></p><p class="note" style="color:var(--muted)">Each of the first two hints used costs one independence mark.</p>';
+  return h;
+}
+function renderGuide(focus){
+  const e=cur(), s=st(), idx=s.stage==='mid'?6:STAGES.indexOf(s.stage)+1;
+  let h='<div aria-label="Overall progress">'+progressHtml()+'</div>';
+  h+='<h2 id="gTitle" tabindex="-1">Exercise '+(S.cur+1)+' of '+EX.length+': '+esc(e.title)+(EX[S.cur].p2?' (fault '+(s.part===2?2:1)+' of 2)':'')+'</h2>';
+  h+='<ol class="stepper" aria-label="Exercise stages">'+STAGE_NAMES.map((n,i)=>'<li class="'+(i<idx?'done':i===idx?'now':'')+'"'+(i===idx?' aria-current="step"':'')+'>'+n+'</li>').join('')+'</ol>';
+  h+='<h3>Scenario</h3><p>'+esc(e.scenario)+'</p>';
+  if(s.hyp&&s.stage!=='rev'&&s.stage!=='mid') h+='<p><b>Hypothesis recorded:</b> '+esc(hypText(s,e))+'</p>';
+
+  if(s.stage==='run'){
+    h+='<h3>Run</h3><p>Run the script, then compare what appears in the TERMINAL with the behaviour described above.</p><div class="actions"><button class="btn" data-act="run">&#9654; Run program</button></div>';
+  }
+  else if(s.stage==='hyp'){
+    h+='<h3>Hypothesise</h3><p>Study the terminal output and the code. Before using the debugger or any hint, commit to a prediction of the cause.</p>';
+    h+='<fieldset class="opts" id="hypForm"><legend>The most likely cause is:</legend>'+
+      e.hyps.map((o,i)=>'<label class="opt"><input type="radio" name="hyp" value="'+i+'"><span>'+esc(o.t)+'</span></label>').join('')+
+      '<label class="opt"><input type="radio" name="hyp" value="own"><span>Another cause (describe it below)</span></label>'+
+      '<label class="sr" for="hypOwn">Describe the cause in your own words</label><textarea id="hypOwn" rows="3" placeholder="Optional: describe the cause in your own words"></textarea></fieldset>';
+    if(s.hypMsg) h+='<div class="fb bad" role="alert">'+esc(s.hypMsg)+'</div>';
+    h+='<div class="actions"><button class="btn" data-act="hyp-submit">Record hypothesis</button></div>';
+  }
+  else if(s.stage==='inv'){
+    h+='<h3>Investigate</h3><div class="fb info">Hypothesis recorded. Now gather evidence that supports or contradicts it.</div><p>'+e.invest+'</p>';
+    h+='<ul><li>Click in the gutter beside a line, or press <kbd>F9</kbd>, to set a breakpoint. Suggested: line '+e.bpLine+'.</li><li>Press <kbd>F5</kbd> to start, then <kbd>F10</kbd> to step over each line'+(e.stepInto?' and <kbd>F11</kbd> to step into the function':'')+'.</li><li>To make a breakpoint conditional, right-click its red dot or use the <b>if</b> button in BREAKPOINTS.</li></ul>';
+    if(e.watch.length) h+='<p>Add to WATCH:</p><div class="chips">'+e.watch.map(w=>'<button class="chip" data-act="add-watch" data-expr="'+esc(w)+'">+ '+esc(w)+'</button>').join('')+'</div>';
+    if(e.cond) h+='<p>Conditional breakpoint (pauses only when the condition is true, which avoids stepping through every iteration):</p><div class="chips"><button class="chip" data-act="suggest-cond">+ line '+e.bpLine+' when '+esc(e.cond)+'</button></div>';
+    h+='<div class="actions"><button class="btn sec2" data-act="suggest-bp">Set suggested breakpoint</button><button class="btn sec2" data-act="debug">&#9654; Start debugging</button></div>';
+    h+=hintsHtml(e,s);
+    h+='<h3>Next</h3><p id="invCount"></p><div class="actions"><button class="btn" data-act="to-locate" id="toLoc">Ready to locate the fault</button></div>';
+  }
+  else if(s.stage==='loc'){
+    h+='<h3>Locate</h3><p>'+esc(e.locPrompt||'Click the line in the editor that contains the fault, or type its number, then confirm the choice.')+' The debugger remains available.</p>';
+    h+='<div class="locrow"><label for="locLine">Line</label><input type="number" id="locLine" min="1" max="'+e.lines.length+'" value="'+(s.sel||'')+'"><button class="btn" data-act="loc-confirm">Confirm line</button></div>';
+    if(s.locMsg) h+='<div class="fb bad" role="alert"><b>Not the faulty line.</b> '+esc(s.locMsg)+'</div>';
+    h+=hintsHtml(e,s);
+  }
+  else if(s.stage==='fix'&&s.fixMode!=='mc'){
+    const start=s.fixDraft!==null?s.fixDraft:e.typeStart?e.typeStart:(e.acceptRe?'':e.lines[e.faultLine-1].trim());
+    h+='<h3>Fix</h3><div class="fb ok"><b>Fault located on line '+e.faultLine+'.</b> Now repair it.</div>';
+    h+='<p><label for="fixIn">'+esc(e.typePrompt||'Edit line '+e.faultLine+' so that the fault is corrected:')+'</label></p><input type="text" class="fixin" id="fixIn" spellcheck="false" autocomplete="off" value="'+esc(start)+'">';
+    if(s.fixMsg) h+='<div class="fb bad" role="alert"><b>Not accepted.</b> '+esc(s.fixMsg)+'</div>';
+    h+='<div class="actions"><button class="btn" data-act="fix-typed">Apply typed fix</button><button class="btn sec2" data-act="fix-mc">Show alternatives instead</button></div><p class="cond-note">A typed fix earns up to 3 marks. After two unsuccessful attempts, or on request, a set of alternatives is offered for 1 mark.</p>';
+    h+=hintsHtml(e,s);
+  }
+  else if(s.stage==='fix'){
+    h+='<h3>Fix</h3><div class="fb ok"><b>Fault located on line '+e.faultLine+'.</b> Now decide how it should be repaired.</div>';
+    h+='<fieldset class="opts"><legend>'+(e.fixes[0].d?'Choose the most appropriate change:':'Choose the most appropriate replacement for line '+e.faultLine+':')+'</legend>'+
+      e.fixes.map((o,i)=>'<label class="opt"><input type="radio" name="fix" value="'+i+'"'+(s.fixSel===i?' checked':'')+'>'+(o.d?'<span>'+esc(o.d)+'</span>':'<code>'+hl(o.c)+'</code>')+'</label>').join('')+'</fieldset>';
+    if(s.fixMsg) h+='<div class="fb bad" role="alert"><b>Not accepted.</b>'+esc(s.fixMsg)+'</div>';
+    h+='<div class="actions"><button class="btn" data-act="fix-check">Apply fix</button></div>';
+    h+=hintsHtml(e,s);
+  }
+  else{
+    const r=s.result, good=e.fixes.filter(o=>o.ok)[0];
+    const M=['The recorded hypothesis matched the actual cause.','Evidence from the debugger supports the hypothesis recorded earlier.','The original prediction was correct.'];
+    const N=['The recorded hypothesis did not match the actual cause. Revising a prediction in the light of evidence is exactly how debugging should proceed.','Evidence from the investigation contradicts the earlier hypothesis. That is a useful result: one explanation has been eliminated.','The original prediction turned out to be incorrect, which is common. The value lies in testing it instead of assuming it.'];
+    const mid=s.stage==='mid', own=s.fixText&&good.c&&norm(s.fixText)!==norm(good.c);
+    h+='<h3>'+(mid?'Fault 1 fixed':'Reveal')+'</h3><div class="fb ok"><b>Fix applied.</b> '+(own?'The typed line <code>'+esc(s.fixText)+'</code> is a valid repair.':esc(good.fb))+' The script has been run again: see the TERMINAL.</div>';
+    h+='<p>'+e.explain+'</p>';
+    h+='<h3>Hypothesis check</h3><p><b>Recorded:</b> '+esc(hypText(s,e))+'</p><p><b>Actual cause:</b> '+esc(e.cause)+'</p>';
+    if(r.hyp==='match') h+='<div class="fb ok">'+M[S.cur%3]+'</div>';
+    else if(r.hyp==='miss') h+='<div class="fb bad">'+N[S.cur%3]+'</div>';
+    else if(r.hyp==='own') h+='<div class="fb info">This hypothesis was written in free text. Compare it with the actual cause above, then record an honest judgement of how close it was:<div class="chips"><button class="chip" data-act="selfrate" data-r="match">It matched</button><button class="chip" data-act="selfrate" data-r="part">It partly matched</button><button class="chip" data-act="selfrate" data-r="miss">It did not match</button></div></div>';
+    else h+='<div class="fb '+(r.hyp==='own-match'?'ok':r.hyp==='own-miss'?'bad':'info')+'">Self-assessment recorded: '+hypLabel(r.hyp).toLowerCase()+'. '+(r.hyp==='own-match'?M[S.cur%3]:r.hyp==='own-miss'?N[S.cur%3]:'A partial match is worth examining: identify which part of the prediction the evidence supported and which part it did not.')+'</div>';
+    h+='<div class="habit"><b>Debugging habit:</b> '+esc(e.habit)+'</div>';
+    h+='<h3>Why the other fixes fall short</h3><ul>'+e.fixes.filter(o=>!o.ok).map(o=>'<li>'+(o.d?esc(o.d):'<code>'+esc(o.c)+'</code>')+'<br>'+esc(o.fb)+'</li>').join('')+'</ul>';
+    h+='<h3>'+(mid?'Marks for fault 1':s.p1?'Marks for fault 2':'Marks for this exercise')+': '+r.score+' / 10</h3><ul><li>Hypothesis: '+r.pHyp+' / 2'+(r.hyp==='own'?' (awaiting self-assessment)':'')+'</li><li>Locating the fault ('+r.loc+(r.loc===1?' attempt':' attempts')+'): '+r.pLoc+' / 3</li><li>Choosing the fix ('+r.fix+(r.fix===1?' attempt':' attempts')+'): '+r.pFix+' / 3</li><li>Independence ('+r.hints+(r.hints===1?' hint':' hints')+' used): '+r.pHint+' / 2</li></ul>';
+    if(s.p1&&!mid) h+='<p><b>Capstone mark:</b> the average of fault 1 ('+s.p1.score+') and fault 2 ('+r.score+'), which is '+Math.round((s.p1.score+r.score)/2)+' / 10.</p>';
+    if(mid) h+='<div class="fb bad"><b>One fault remains.</b> The output in the TERMINAL is still not as expected, so the cycle starts again with a new hypothesis.</div>';
+    h+='<div class="actions">'+(mid?'<button class="btn" data-act="part2">Investigate the second fault</button>':(S.cur<EX.length-1?'<button class="btn" data-act="next">Next exercise</button>':'<button class="btn" data-act="tab" data-tab="summary">View summary</button>')+'<button class="btn sec2" data-act="again">Practise again</button>')+(e.kind==='runtime'?'<button class="btn sec2" data-act="wall">Run static analysis on original</button>':'')+'</div>';
+  }
+  $('guide').innerHTML=h;
+  updateInv();
+  if(focus){ const t=$('gTitle'); if(t) t.focus(); $('guide').scrollTop=0; }
+}
+function updateInv(){
+  const s=st(), c=$('invCount'); if(!c) return;
+  const need=2;
+  c.textContent=s.steps>=need?'Debugger actions so far: '+s.steps+'. Move on once the evidence points to a single line.':'Use the debugger at least twice before moving on (actions so far: '+s.steps+').';
+  $('toLoc').disabled=s.steps<need;
+}
+
+/* ---------- documents ---------- */
+function exListHtml(){
+  return '<ul class="exlist">'+EX.map((e,i)=>{ const p=S.progress[e.id]||{}; return '<li><button data-act="open" data-i="'+i+'">'+(p.done?'<span class="tick" aria-label="completed">&#10003; '+p.score+'/10</span>':'')+'<b>'+(i+1)+'. '+esc(e.title)+'</b><small>'+esc(e.group)+'</small></button></li>'; }).join('')+'</ul>';
+}
+function docWelcome(){
+  const row=(k,n,key,d)=>'<tr><td class="c-blue">'+ICON[k]+'</td><td>'+n+'</td><td><kbd>'+key+'</kbd></td><td>'+d+'</td></tr>';
+  return '<article class="doc"><h1>Python Debugging Lab</h1><p class="lead">Level 4 Software Engineering: '+(EX.length-1)+' faulty scripts and a two-fault capstone to diagnose with a simulated Visual Studio Code debugger.</p>'+
+  '<h2>Learning objectives</h2><p>By the end of this resource, students will be able to:</p><ul><li>Interpret Python syntax errors and tracebacks to locate syntax and type faults.</li><li>Apply breakpoints and stepping commands to trace script execution.</li><li>Analyse variable state and the call stack to identify logic errors.</li><li>Formulate and test hypotheses about the cause of a fault.</li><li>Evaluate alternative fixes and justify the most appropriate solution.</li></ul>'+
+  '<h2>How each exercise works</h2><p>The Lab Guide beside the editor leads every exercise through the same seven stages:</p><ol><li><b>Scenario:</b> read what the script is supposed to do.</li><li><b>Run:</b> run it to observe the faulty output or the error message.</li><li><b>Hypothesise:</b> record a prediction of the cause before any hint or answer is available.</li><li><b>Investigate:</b> set breakpoints and step through the code while VARIABLES, WATCH and CALL STACK show the program state.</li><li><b>Locate:</b> select the line that contains the fault.</li><li><b>Fix:</b> type the corrected line. After two unsuccessful attempts a set of alternatives is offered instead.</li><li><b>Reveal:</b> read the explanation, compare it with the recorded hypothesis and note the debugging habit.</li></ol>'+
+  '<div class="card"><b>Why hypothesis first?</b> Stepping through code without a prediction is only watching. Committing to a hypothesis turns each step into a test: the evidence either supports the idea or eliminates it. Experienced developers debug this way, and a wrong hypothesis that is tested and discarded is still progress. Hints unlock only after a hypothesis has been recorded.</div>'+
+  '<h2>The debug toolbar</h2><table><thead><tr><th scope="col">Icon</th><th scope="col">Command</th><th scope="col">Key</th><th scope="col">Effect</th></tr></thead><tbody>'+
+  row('cont','Continue','F5','Starts a session, or resumes until the next breakpoint or the end of the script.')+
+  row('over','Step Over','F10','Executes the current line. A function call is run as a single step.')+
+  row('into','Step Into','F11','Executes the current line and, when it calls a function, pauses on the first line inside that function.')+
+  row('out','Step Out','Shift+F11','Runs the remainder of the current function and pauses back in the caller.')+
+  row('restart','Restart','Ctrl+Shift+F5','Ends the session and starts again from the beginning.')+
+  row('stop','Stop','Shift+F5','Ends the debug session.')+
+  '</tbody></table><p>The yellow highlighted line is the <em>next</em> line to be executed: it has not run yet. <kbd>F9</kbd> toggles a breakpoint on the current editor line, and <kbd>F6</kbd> pauses a running script. Should the browser intercept a function key, use the toolbar buttons instead.</p>'+
+  '<h2>Breakpoints</h2><p>A breakpoint is a marker telling the debugger to pause just before a particular line runs. Click in the gutter to the left of a line number to place one: a red dot appears. With the editor focused, the up and down arrow keys move between lines and <kbd>F9</kbd> toggles a breakpoint. When no breakpoints are set, a new session pauses on the first executable line of the script.</p><p>A <b>conditional breakpoint</b> pauses only when an expression is true, for example <code>i == 5</code> inside a loop. Right-click a red dot, or use the <b>if</b> button in the BREAKPOINTS panel, to add a condition.</p>'+
+  '<h2>How this differs from real Python debugging</h2><p>In Visual Studio Code, Python is debugged through the Python extension. This lab simulates that experience in the browser, so nothing needs to be installed. The top level of a script appears in the CALL STACK as <code>&lt;module&gt;</code>, exactly as the real debugger shows it, and a <code>def</code> line is itself a step: executing it creates the function without running its body.</p><p>A script with a syntax error is never executed at all, so a real debugger cannot step through it. For the two syntax-error exercises the debug controls instead replay, in simplified form, how Python reads the file. This is a teaching aid and is labelled as simulated wherever it appears. The static analysis output offered at the end of some exercises is illustrative and is labelled as such.</p>'+
+  '<h2>Exercises</h2>'+exListHtml()+
+  '<p>The final exercise is a capstone containing two faults that must be found one after the other. Its mark is the average of the two parts.</p><p>Progress and scores are saved in this browser, and the Summary tab can export them for submission. Each exercise is worth 10 marks: 2 for the hypothesis, 3 for locating the fault, 3 for the fix (1 when it is chosen from alternatives) and 2 for working without hints.</p></article>';
+}
+function docToolkit(){
+  return '<article class="doc"><h1>Debugging Toolkit</h1><p class="lead">A quick reference to keep open while working through the exercises.</p>'+
+  '<h2>1. Reading Python error messages</h2><p>Python reports problems in two quite different ways.</p><h3>Syntax errors</h3><p>Python checks the whole file before running any of it. If the file is not valid Python, nothing is executed and a single location is reported:</p><pre>  File "report.py", line 13\n    passes += 1\n               ^\nIndentationError: unindent does not match any outer indentation level</pre><p>The line shown is where Python <em>noticed</em> the problem. For an unclosed bracket it is the line where the bracket was opened, and the repair belongs further down.</p><h3>Exceptions and tracebacks</h3><p>An exception is raised while the script is running, so earlier lines have already produced their output. Python prints a traceback:</p><pre>Traceback (most recent call last):\n  File "order.py", line 13, in &lt;module&gt;\n    total = order_cost(form_input, ticket_price)\n  File "order.py", line 4, in order_cost\n    cost = quantity * price\nTypeError: can\'t multiply sequence by non-int of type \'float\'</pre><ul><li><b>Read from the bottom up.</b> The last line gives the type of error and a description.</li><li>The entry just above it is where the exception was <em>raised</em>.</li><li>Each entry above that is a caller. The fault is often in a caller that supplied a bad value, not in the line that finally failed.</li></ul><table><thead><tr><th scope="col">Exception</th><th scope="col">Usual meaning</th></tr></thead><tbody><tr><td>NameError</td><td>A name has been used that does not exist, often through a spelling mistake.</td></tr><tr><td>TypeError</td><td>An operation was applied to a value of the wrong type, such as text where a number was needed.</td></tr><tr><td>IndexError</td><td>A list position was requested that does not exist.</td></tr><tr><td>KeyError</td><td>A dictionary key was requested that does not exist.</td></tr><tr><td>UnboundLocalError</td><td>A function used a local variable before giving it a value.</td></tr><tr><td>ValueError</td><td>The type was right but the value was unsuitable, such as int("abc").</td></tr></tbody></table><p>Many faults raise no error at all: the script runs and prints the wrong answer. Those are found by comparing the output with what was expected, and then by debugging.</p>'+
+  '<h2>2. Breakpoints</h2><p>A breakpoint pauses execution immediately <em>before</em> the marked line runs. Place one just ahead of the region under suspicion and not at the very top of the script. A useful strategy is to halve the search: put a breakpoint in the middle, check whether the state is already wrong, and then move earlier or later accordingly.</p><p>Inside a loop, an ordinary breakpoint pauses on every iteration. A <b>conditional breakpoint</b> carries an expression such as <code>i == 5</code> or <code>total &gt; 1000</code> and pauses only when that expression is true, which leads straight to the iteration of interest.</p>'+
+  '<h2>3. Stepping commands</h2><table><thead><tr><th scope="col">Command</th><th scope="col">Key</th><th scope="col">Use it when</th></tr></thead><tbody><tr><td>Continue</td><td><kbd>F5</kbd></td><td>The next point of interest is a later breakpoint.</td></tr><tr><td>Step Over</td><td><kbd>F10</kbd></td><td>The called function is trusted and only its effect matters.</td></tr><tr><td>Step Into</td><td><kbd>F11</kbd></td><td>The fault may lie inside the function being called.</td></tr><tr><td>Step Out</td><td><kbd>Shift+F11</kbd></td><td>Enough has been seen inside the function and the caller is of interest again.</td></tr></tbody></table>'+
+  '<h2>4. Watch expressions</h2><p>The VARIABLES panel lists every variable in the current scope, with lists and dictionaries expanded. Strings are shown in quotation marks, which reveals what <code>print()</code> hides: <code>\'7\'</code> and <code>7</code> look identical in output but are different values. The WATCH panel evaluates expressions chosen by the developer after each step, for example <code>i &lt; len(marks)</code>, <code>user["email"]</code> or <code>type(guess)</code>. In this lab the WATCH panel supports variables, arithmetic (including <code>/</code>, <code>//</code> and <code>%</code>), comparisons, <code>and</code>, <code>or</code>, <code>not</code>, <code>in</code>, indexing, and the functions <code>len()</code>, <code>type()</code>, <code>int()</code>, <code>float()</code>, <code>str()</code>, <code>sum()</code>, <code>max()</code>, <code>min()</code> and <code>round()</code>.</p>'+
+  '<h2>5. The call stack</h2><p>Each function call creates a <em>stack frame</em> holding that call\'s parameters and local variables. The CALL STACK panel lists the frames with the current function at the top and <code>&lt;module&gt;</code>, the top level of the script, at the bottom. It is the live equivalent of a traceback. Selecting a frame displays the variables of that scope, which makes it possible to compare what the caller holds with what the function received.</p>'+
+  '<h2>6. Rubber duck debugging</h2><p>Explain the code aloud, line by line, to an inanimate listener such as a rubber duck. State what each line is <em>meant</em> to do and then what it <em>actually</em> does. The mismatch between the two often becomes obvious part of the way through the explanation, because describing the code forces assumptions to be examined.</p>'+
+  '<h2>7. Quick inspection with print</h2><p>When no debugger is to hand, a temporary <code>print()</code> can show a value at a chosen point. Print the type as well as the value, for example <code>print(repr(guess), type(guess))</code>, because <code>repr()</code> shows the quotation marks that plain <code>print()</code> removes. Remove such lines afterwards. A debugger gives the same information for every variable at once, without editing the script.</p>'+
+  '<h2>A repeatable process</h2><ol><li>Reproduce the fault and describe the symptom precisely, including the full error message.</li><li>Form a hypothesis about the cause.</li><li>Predict what the debugger should show if the hypothesis is right.</li><li>Test the prediction with breakpoints, stepping and watches.</li><li>Fix the cause, not the symptom, and run the script again to confirm.</li></ol></article>';
+}
+function docSummary(){
+  const d=doneCount(), sc=totalScore(), all=d===EX.length, pct=sc*100/MAX;
+  const band=pct>=85?'An excellent result: faults were diagnosed accurately and largely without assistance.':pct>=65?'A solid result. Reviewing the exercises with the lowest marks would consolidate the weaker techniques.':pct>=40?'A fair start. Repeating the exercises where several attempts or hints were needed is recommended.':'Further practice is advisable. Revisit the Debugging Toolkit and attempt the exercises again.';
+  let h='<article class="doc"><h1>Summary</h1><p class="lead">'+(all?'All exercises are complete.':'Completed '+d+' of '+EX.length+' exercises. Finish the remaining exercises to complete the lab.')+'</p>';
+  h+='<p class="big">'+sc+' / '+MAX+'</p>'+(all?'<p>'+band+'</p>':'')+'<div class="pbar" role="progressbar" aria-label="Exercises completed" aria-valuemin="0" aria-valuemax="'+EX.length+'" aria-valuenow="'+d+'"><i style="width:'+(d*100/EX.length)+'%"></i></div>';
+  h+='<h2>Results by exercise</h2><table><thead><tr><th scope="col">Exercise</th><th scope="col">Hypothesis</th><th scope="col">Locate attempts</th><th scope="col">Fix attempts</th><th scope="col">Hints</th><th scope="col">Marks</th></tr></thead><tbody>'+
+    EX.map((e,i)=>{ const p=S.progress[e.id]; return '<tr><td><button data-act="open" data-i="'+i+'" style="color:var(--accent);text-decoration:underline">'+(i+1)+'. '+esc(e.title)+'</button></td>'+(p&&p.done?'<td>'+hypLabel(p.hyp)+'</td><td>'+p.loc+'</td><td>'+p.fix+'</td><td>'+p.hints+'</td><td>'+p.score+' / 10</td>':'<td colspan="5">Not yet completed</td>')+'</tr>'; }).join('')+'</tbody></table>';
+  h+='<h2>Debugging habits to keep</h2><ul>'+EX.map(e=>'<li>'+esc(e.habit)+'</li>').join('')+'</ul>';
+  h+='<h2>Reflection</h2><p><label for="reflect">Choose one exercise in which the first hypothesis was wrong, or in which a hint was needed. What evidence from the debugger changed the diagnosis, and what will be done differently when debugging the next piece of coursework?</label></p><textarea id="reflect" rows="7" placeholder="Write a short reflection (around 100 words). It is saved in this browser.">'+esc(store.get('ydl.reflect',''))+'</textarea>';
+  h+='<h2>Export results</h2><p><label for="stuName">Name or student number (optional, included in the export):</label></p><input type="text" id="stuName" autocomplete="off" style="max-width:340px" value="'+esc(store.get('ydl.name',''))+'"><p>The export contains the score, each recorded hypothesis and its outcome, the attempts and hints used, each fix and the reflection above.</p><p><button class="btn" data-act="export">Download my results (.txt)</button> <button class="btn sec2" data-act="print">Print or save as PDF</button></p>';
+  h+='<h2>Start again</h2><p>Resetting clears every score, tick and the reflection stored in this browser.</p><p><button class="btn sec2" data-act="reset">Reset all progress</button></p></article>';
+  return h;
+}
+
+/* ---------- actions: run ---------- */
+function runProgram(){
+  const e=cur(), s=st();
+  stopDebug(true);
+  const P='student@lab:~/debugging$ ';
+  s.term=[{c:'cmd',t:P+'python '+e.file}];
+  s.ran=true;
+  if(e.kind==='compile'&&!s.fixed){
+    e.diag.out.forEach(l=>s.term.push({c:'err',t:l}));
+    s.term.push({c:'note',t:'Python found a syntax error while reading the file: not a single line of the script was executed.'});
+    s.out=[{t:'[Python] python '+e.file},{c:'err',t:'[Python] Stopped with a syntax error.'}];
+  }else{
+    let tb=false;
+    (s.fixed?e.fixedRun:e.run).forEach(l=>{ if(/^Traceback/.test(l)) tb=true; s.term.push({c:tb?'err':'out',t:l}); });
+    if(s.fixed&&e.stillWrong) s.term.push({c:'err',t:'The first fault has gone, but the output is still not as expected.'});
+    else if(s.fixed) s.term.push({c:'good',t:'The output now matches the expected behaviour.'});
+    else if(tb) s.term.push({c:'note',t:'(The script stopped at the exception. Lines after it were not executed.)'});
+    else if(e.runNote) s.term.push({c:'note',t:'('+e.runNote+')'});
+    s.out=[{t:'[Python] python '+e.file},{c:tb&&!s.fixed?'err':'good',t:tb&&!s.fixed?'[Python] The script stopped with an uncaught exception.':'[Python] The script ran to completion.'}];
+  }
+  if(s.stage==='run') s.stage='hyp';
+  S.panel='terminal';
+}
+
+/* ---------- actions: debugger ---------- */
+function con(t,c){ const s=st(); s.con.push({t:t,c:c||'out'}); if(s.con.length>300) s.con.splice(0,s.con.length-300); }
+function emit(o){ if(o) o.split('\n').forEach(l=>{ if(l) con(l,'out'); }); }
+function refreshDebugUI(scroll){ renderEditor(scroll); renderDebug(); renderPanel(); renderStatus(); renderToolbar(); updateInv(); }
+function startDebug(){
+  const e=cur(), s=st();
+  if(S.tab!=='code'){ S.tab='code'; renderTabs(); renderExplorer(); }
+  if(s.stage==='run'){ toast('Run the script first, so that the symptom is known before debugging begins.'); return; }
+  if(s.stage==='hyp'){ toast('Record a hypothesis before starting the debugger. Debugging is most effective when it tests a prediction.'); return; }
+  if(s.fixed){ toast(s.stage==='mid'?'Choose "Investigate the second fault" in the Lab Guide to continue.':'This exercise is complete. Choose "Practise again" in the Lab Guide to debug it once more.'); return; }
+  dbg.active=true; dbg.running=false; dbg.i=0; dbg.prev=null;
+  s.con=[]; S.panel='console'; s.steps++;
+  con(e.kind==='compile'?'Parser walk-through started (simulated). The script has a syntax error, so Python did not execute any of it. Stepping follows the order in which Python reads the file.':'Debug session started for '+e.file+'.','info');
+  const first=e.steps[0];
+  if(s.bps.length&&!bpHit(s,e,first)) advance('cont',true);
+  else{ con(s.bps.length?'Breakpoint reached at line '+first.l+'.':'No breakpoints are set: paused on entry at line '+first.l+'.','info'); pause(); }
+}
+function pause(){
+  const step=cur().steps[dbg.i];
+  dbg.running=false; dbg.frame=step.f.length-1; S.cursor=step.l;
+  refreshDebugUI(true);
+  say('Paused at line '+step.l);
+}
+function advance(mode,fromStart){
+  const e=cur(), s=st();
+  if(!dbg.active||dbg.running) return;
+  if(!fromStart) s.steps++;
+  const here=e.steps[dbg.i], depth=here.f.length;
+  dbg.prev={fn:here.f[depth-1].fn,vals:frameVals(here.f[depth-1])};
+  let n=0;
+  for(;;){
+    emit(e.steps[dbg.i].o);
+    dbg.i++;
+    if(dbg.i>=e.steps.length){
+      if(e.loopTo!==null) dbg.i=e.loopTo;
+      else{ endSession(); return; }
+    }
+    n++;
+    const nx=e.steps[dbg.i];
+    if(bpHit(s,e,nx)){ if(mode==='cont'||mode==='out'||nx.f.length>depth) con('Breakpoint reached at line '+nx.l+'.','info'); break; }
+    if(mode==='into') break;
+    if(mode==='over'&&nx.f.length<=depth) break;
+    if(mode==='out'&&nx.f.length<depth) break;
+    if(n>e.steps.length*3+10){
+      dbg.running=true;
+      con('The script is still running and no breakpoint has been reached. Use Pause (F6) or Stop to regain control.','info');
+      refreshDebugUI(false); say('Program running'); return;
+    }
+  }
+  if(dbg.prev&&e.steps[dbg.i].f[e.steps[dbg.i].f.length-1].fn!==dbg.prev.fn) dbg.prev=null;
+  pause();
+}
+function endSession(){
+  const e=cur();
+  con(e.kind==='compile'?'Python stopped with a syntax error. Not a single line of the script was executed.':e.endMsg||'The script has finished (exit code 0).','info');
+  dbg.active=false; dbg.running=false;
+  refreshDebugUI(false); say('Debug session ended');
+}
+function stopDebug(silent){
+  if(!dbg.active) return;
+  dbg.active=false; dbg.running=false;
+  if(!silent){ con('Debug session stopped.','info'); refreshDebugUI(false); }
+}
+function toggleBp(n){
+  const s=st(), i=s.bps.indexOf(n);
+  if(i>=0){ s.bps.splice(i,1); delete s.bpCond[n]; if(S.editBp===n) S.editBp=null; } else s.bps.push(n);
+  renderEditor(false); renderDebug();
+  say('Breakpoint '+(i>=0?'removed from':'set on')+' line '+n);
+}
+
+/* ---------- actions: scoring ---------- */
+function computeResult(e,s){
+  const hyp=s.hyp.own?(s.selfRate?'own-'+s.selfRate:'own'):(e.hyps[s.hyp.i].ok?'match':'miss');
+  const pHyp=(hyp==='match'||hyp==='own-match')?2:hyp==='own-part'?1:0, pLoc=Math.max(1,4-s.locTries), pFix=Math.max(1,4-s.fixTries), pHint=Math.max(0,2-s.hints);
+  return {hyp:hyp,pHyp:pHyp,pLoc:pLoc,pFix:pFix,pHint:pHint,loc:s.locTries,fix:s.fixTries,hints:s.hints,score:pHyp+pLoc+pFix+pHint};
+}
+function finish(){
+  const e=cur(), s=st(), base=EX[S.cur], p=s.p1;
+  const r=s.result=computeResult(e,s);
+  const score=p?Math.round((p.score+r.score)/2):r.score;
+  const old=S.progress[base.id];
+  if(!old||!old.done||score>=old.score){
+    S.progress[base.id]={done:true,score:score,hyp:r.hyp,loc:r.loc+(p?p.loc:0),fix:r.fix+(p?p.fix:0),hints:r.hints+(p?p.hints:0),
+      hypText:(p?'Fault 1: '+s.p1hyp+' | Fault 2: ':'')+hypText(s,e),
+      fixText:(p?'Fault 1: '+s.p1fix+' | Fault 2: ':'')+fixLabel(e,s)};
+    store.set('ydl.progress',S.progress);
+  }
+}
+function fixLabel(e,s){ return s.fixText?s.fixText+' (typed)':e.fixes.filter(o=>o.ok).map(o=>o.c||o.d)[0]+' (chosen from alternatives)'; }
+function fixSuccess(){
+  const e=cur(), s=st(), base=EX[S.cur];
+  stopDebug(true); s.fixed=true; s.fixMsg=null;
+  if(base.p2&&s.part!==2){ s.stage='mid'; s.result=computeResult(e,s); }
+  else{ s.stage='rev'; finish(); }
+  runProgram(); S.cursor=e.faultLine; renderAll(true);
+}
+function resultsText(){
+  const nameEl=$('stuName'), refEl=$('reflect');
+  const name=nameEl?nameEl.value:store.get('ydl.name',''), ref=refEl?refEl.value:store.get('ydl.reflect','');
+  const nl='\r\n';
+  let t='Python Debugging Lab: results'+nl+'Name or student number: '+(name.trim()||'(not given)')+nl+'Date: '+new Date().toLocaleDateString('en-GB')+nl+'Completed: '+doneCount()+' of '+EX.length+nl+'Score: '+totalScore()+' / '+MAX+nl+nl;
+  EX.forEach((e,i)=>{
+    const p=S.progress[e.id];
+    t+=(i+1)+'. '+e.title+': '+(p&&p.done?p.score+' / 10':'not completed')+nl;
+    if(p&&p.done) t+='   Hypothesis: '+(p.hypText||'')+nl+'   Outcome: '+hypLabel(p.hyp)+nl+'   Locate attempts: '+p.loc+', fix attempts: '+p.fix+', hints used: '+p.hints+nl+'   Fix: '+(p.fixText||'')+nl;
+    t+=nl;
+  });
+  return t+'Reflection:'+nl+(ref.trim()||'(none written)')+nl;
+}
+
+function renderAll(focusGuide){ renderTabs(); renderEditor(true); renderDebug(); renderExplorer(); renderPanel(); renderStatus(); renderGuide(focusGuide); renderView(); }
+function renderView(){
+  ['explorer','search','debug','ext'].forEach(v=>{ $('view-'+v).hidden=S.view!==v; });
+  document.querySelectorAll('.activity button').forEach(b=>b.setAttribute('aria-pressed',String(S.sideOpen&&b.dataset.view===S.view)));
+  $('sidebar').classList.toggle('closed',!S.sideOpen);
+}
+function openExercise(i,line){
+  stopDebug(true);
+  S.cur=i; S.tab='code'; S.cursor=line||1; S.panel='terminal';
+  renderAll(false);
+}
+
+const ACT={
+  theme(){ setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark',true); },
+  view(b){ const v=b.dataset.view; if(S.view===v) S.sideOpen=!S.sideOpen; else{ S.view=v; S.sideOpen=true; } renderView(); },
+  tab(b){ S.tab=b.dataset.tab; renderTabs(); renderExplorer(); if(b.getAttribute('role')==='tab'){ const t=$('tab-'+S.tab); if(t) t.focus(); } },
+  ptab(b){ S.panel=b.dataset.p; renderPanel(); const t=document.querySelector('#ptabs [data-p="'+S.panel+'"]'); if(t) t.focus(); },
+  open(b){ openExercise(+b.dataset.i); $('gTitle').focus(); },
+  run(b){ if(S.tab!=='code'){ S.tab='code'; } runProgram(); renderAll(!!b.closest('#guide')); },
+  debug(){ startDebug(); },
+  cont(){ if(!dbg.active) startDebug(); else if(dbg.running){ con('Paused at line '+cur().steps[dbg.i].l+'.','info'); pause(); } else advance('cont'); },
+  over(){ advance('over'); }, into(){ advance('into'); }, out(){ advance('out'); },
+  restart(){ if(dbg.active){ stopDebug(true); startDebug(); } },
+  stop(){ stopDebug(false); },
+  frame(b){ dbg.frame=+b.dataset.i; const step=pausedStep(); if(step) S.cursor=step.f[dbg.frame].l; renderEditor(true); renderDebug(); const f=document.querySelector('.frame[aria-current="true"]'); if(f) f.focus(); },
+  'rm-watch'(b){ st().watches.splice(+b.dataset.i,1); renderDebug(); },
+  'add-watch'(b){ const s=st(), x=b.dataset.expr; if(s.watches.indexOf(x)<0) s.watches.push(x); S.view='debug'; S.sideOpen=true; renderView(); renderDebug(); toast('Added "'+x+'" to the WATCH panel.'); },
+  'rm-bp'(b){ toggleBp(+b.dataset.line); },
+  'clear-bps'(){ st().bps=[]; st().bpCond={}; S.editBp=null; renderEditor(false); renderDebug(); },
+  'suggest-bp'(){ const e=cur(), s=st(); if(s.bps.indexOf(e.bpLine)<0) toggleBp(e.bpLine); S.cursor=e.bpLine; renderEditor(true); toast('Breakpoint set on line '+e.bpLine+'.'); },
+  problem(b){ S.tab='code'; S.cursor=+b.dataset.line; renderTabs(); renderEditor(true); $('editor').focus(); },
+  'hyp-submit'(){
+    const s=st(), r=document.querySelector('input[name=hyp]:checked'), own=$('hypOwn').value.trim();
+    if(!r&&!own){ s.hypMsg='Select one of the suggested causes or describe another before continuing.'; renderGuide(false); return; }
+    if((r&&r.value==='own'||!r)&&own.length<10){ s.hypMsg='Describe the suspected cause in a little more detail (at least ten characters).'; renderGuide(false); return; }
+    s.hyp=(!r||r.value==='own')?{own:true,text:own}:{i:+r.value};
+    s.hypMsg=null; s.stage='inv'; renderGuide(true);
+  },
+  hint(){ const s=st(); if(s.hints<3) s.hints++; renderGuide(false); },
+  'to-locate'(){ const s=st(); s.stage='loc'; s.sel=null; renderGuide(true); renderEditor(false); },
+  'loc-confirm'(){
+    const e=cur(), s=st(), G=['Consider which line first makes the program state incorrect, as opposed to the line where the symptom shows.','Trace back from the symptom to the earliest line that behaves unexpectedly.','Stepping through once more while watching VARIABLES may help to narrow the search.'];
+    const n=s.sel;
+    if(!n||n<1||n>e.lines.length){ s.locMsg='Select a line in the editor or type a valid line number first.'; renderGuide(false); return; }
+    s.locTries++;
+    if(n===e.faultLine){ s.stage='fix'; s.found=n; s.locMsg=null; renderEditor(false); renderGuide(true); }
+    else{ s.locMsg=e.nearLines[n]||('Line '+n+' is not where the fault lies. '+G[(s.locTries-1)%3]); renderGuide(false); const m=document.querySelector('#guide .fb.bad'); if(m&&m.scrollIntoView) m.scrollIntoView({block:'nearest'}); }
+  },
+  'fix-check'(){
+    const e=cur(), s=st(), r=document.querySelector('input[name=fix]:checked');
+    if(!r){ s.fixMsg='Select one of the options first.'; renderGuide(false); return; }
+    const o=e.fixes[+r.value]; s.fixTries++; s.fixSel=+r.value;
+    if(o.ok){ s.fixText=null; fixSuccess(); }
+    else{ s.fixMsg=o.fb; renderGuide(false); const m=document.querySelector('#guide .fb.bad'); if(m&&m.scrollIntoView) m.scrollIntoView({block:'nearest'}); }
+  },
+  'fix-typed'(){
+    const e=cur(), s=st(), raw=$('fixIn').value, nv=norm(raw);
+    const G=['That line is not among the accepted fixes. Check that it is valid Python and that it removes the cause, not only the symptom.','Still not an accepted fix. Re-read the faulty line and change as little as possible.'];
+    s.fixDraft=raw;
+    if(!nv){ s.fixMsg='Type the corrected line first.'; renderGuide(false); return; }
+    s.fixTries++;
+    if(e.acceptRe?e.acceptRe.test(nv):e.acceptN.indexOf(nv)>=0){ s.fixText=raw.trim(); fixSuccess(); return; }
+    const orig=e.lines[e.faultLine-1].trim(), hit=e.fixes.filter(o=>!o.ok&&o.c&&norm(o.c)===nv)[0];
+    s.fixMsg=hit?hit.fb:(!e.acceptRe&&nv===norm(orig))?'The line has not been changed.':(!e.acceptRe&&/\{$/.test(orig)&&!/\{$/.test(nv))?'The opening brace at the end of the line has been lost.':G[(s.fixTries-1)%2];
+    if(s.fixTries>=2){ s.fixMode='mc'; s.fixMsg+=' Two typed attempts have been used, so choose from the alternatives below.'; }
+    renderGuide(false);
+    const f=$('fixIn'); if(f) f.focus();
+  },
+  'fix-mc'(){ const s=st(); s.fixMode='mc'; s.fixTries=Math.max(s.fixTries,2); s.fixMsg=null; renderGuide(false); const r=document.querySelector('input[name=fix]'); if(r) r.focus(); },
+  selfrate(b){ const s=st(); s.selfRate=b.dataset.r; if(s.stage==='mid') s.result=computeResult(cur(),s); else finish(); renderGuide(false); renderExplorer(); },
+  part2(){
+    const base=EX[S.cur], s=st(), ns=fresh();
+    ns.part=2; ns.p1=s.result; ns.p1hyp=hypText(s,base); ns.p1fix=fixLabel(base,s);
+    S.ex[base.id]=ns; S.cursor=1;
+    runProgram(); renderAll(true);
+  },
+  wall(){
+    const e=cur(), s=st(), w=e.wall, tool=w?w.tool:'pylint';
+    s.term=[{c:'cmd',t:'student@lab:~/debugging$ '+tool+' '+e.file},{c:'note',t:'(illustrative output in the style of a static analysis tool, run on the original, unfixed script)'}];
+    if(w){
+      s.term.push({c:'warn',t:e.file+':'+w.line+(tool==='pylint'?':'+(w.col-1):'')+': '+w.msg},{t:String(w.line).padStart(5)+' | '+e.lines[w.line-1]},
+        {c:'note',t:'A static analysis tool reads the code without running it. Here it reports the fault that took a debugging session to find. The exact wording depends on the tool and its settings.'});
+    }else{
+      s.term.push({c:'good',t:'No issues reported for this fault.'},{c:'note',t:'Static analysis has nothing to say about this fault: the code is consistent, but it does the wrong thing. Only testing and debugging could reveal it.'});
+    }
+    S.panel='terminal'; renderPanel();
+    toast(w?'A static analysis tool would have reported this fault: see the TERMINAL.':'No findings: this fault is invisible to static analysis. See the TERMINAL.');
+  },
+  'edit-cond'(b){ S.editBp=S.editBp===+b.dataset.line?null:+b.dataset.line; renderDebug(); const i=$('bpCondIn'); if(i) i.focus(); },
+  'save-cond'(b){ const s=st(), n=+b.dataset.line, v=$('bpCondIn').value.trim(); if(v) s.bpCond[n]=v; else delete s.bpCond[n]; S.editBp=null; renderEditor(false); renderDebug(); say(v?'Condition set on line '+n:'Condition removed from line '+n); },
+  'suggest-cond'(){ const e=cur(), s=st(); if(s.bps.indexOf(e.bpLine)<0) s.bps.push(e.bpLine); s.bpCond[e.bpLine]=e.cond; S.cursor=e.bpLine; S.view='debug'; S.sideOpen=true; renderView(); renderEditor(true); renderDebug(); toast('Conditional breakpoint set: line '+e.bpLine+' when '+e.cond+'.'); },
+  export(){
+    try{
+      const url=URL.createObjectURL(new Blob([resultsText()],{type:'text/plain'})), a=document.createElement('a');
+      a.href=url; a.download='python-debugging-lab-results.txt'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),2000);
+      toast('Results downloaded as python-debugging-lab-results.txt.');
+    }catch(x){ toast('The download could not be started in this browser. Use "Print or save as PDF" instead.'); }
+  },
+  print(){ window.print(); },
+  next(){ openExercise(S.cur+1); $('gTitle').focus(); $('guide').scrollTop=0; },
+  again(){ stopDebug(true); S.ex[cur().id]=fresh(); S.cursor=1; renderAll(true); },
+  reset(){
+    if(!window.confirm('Reset all progress, scores and the reflection? This cannot be undone.')) return;
+    S.progress={}; S.ex={}; store.set('ydl.progress',{}); store.set('ydl.reflect','');
+    stopDebug(true); S.cur=0; S.tab='welcome'; renderAll(false);
+  }
+};
+
+/* ---------- events ---------- */
+document.addEventListener('click',ev=>{
+  const b=ev.target.closest('[data-act]');
+  if(b){ if(b.disabled) return; const f=ACT[b.dataset.act]; if(f) f(b,ev); return; }
+  const g=ev.target.closest('.gut');
+  if(g){ S.cursor=+g.dataset.bp; toggleBp(S.cursor); return; }
+  const row=ev.target.closest('.row');
+  if(row) pickLine(+row.dataset.line);
+});
+function pickLine(n){
+  const s=st();
+  S.cursor=n;
+  if(s.stage==='loc'){ s.sel=n; const inp=$('locLine'); if(inp) inp.value=n; }
+  renderEditor(true);
+}
+$('editor').addEventListener('keydown',ev=>{
+  const max=codeOf(cur(),st()).split('\n').length;
+  if(ev.key==='ArrowDown'||ev.key==='ArrowUp'){
+    ev.preventDefault();
+    pickLine(Math.min(max,Math.max(1,S.cursor+(ev.key==='ArrowDown'?1:-1))));
+    say('Line '+S.cursor+': '+(cur().lines[S.cursor-1]||'').trim()+(st().bps.indexOf(S.cursor)>=0?'. Breakpoint set.':''));
+  }
+});
+document.addEventListener('input',ev=>{
+  const t=ev.target;
+  if(t.id==='locLine'){ const n=parseInt(t.value,10); const s=st(); s.sel=isNaN(n)?null:n; if(s.sel){ S.cursor=s.sel; } renderEditor(true); }
+  else if(t.id==='reflect') store.set('ydl.reflect',t.value);
+  else if(t.id==='stuName') store.set('ydl.name',t.value);
+  else if(t.id==='fixIn') st().fixDraft=t.value;
+  else if(t.id==='hypOwn'){ if(t.value.trim()){ const r=document.querySelector('input[name=hyp][value=own]'); if(r) r.checked=true; } }
+  else if(t.id==='searchBox') doSearch(t.value);
+});
+$('watchForm').addEventListener('submit',ev=>{
+  ev.preventDefault();
+  const inp=$('watchIn'), x=inp.value.trim(); if(!x) return;
+  const s=st(); if(s.watches.indexOf(x)<0) s.watches.push(x);
+  inp.value=''; renderDebug(); inp.focus();
+});
+function doSearch(q){
+  q=q.trim().toLowerCase(); const out=[];
+  if(q.length<2){ $('searchRes').innerHTML='<p class="empty">Type at least two characters.</p>'; return; }
+  EX.forEach((e,i)=>e.lines.forEach((ln,j)=>{ if(out.length<40&&ln.toLowerCase().indexOf(q)>=0) out.push('<li><button class="frame" data-act="open-line" data-i="'+i+'" data-line="'+(j+1)+'"><span>'+esc(ln.trim().slice(0,28))+'</span><small>'+esc(e.file.slice(0,2))+' : '+(j+1)+'</small></button></li>'); }));
+  $('searchRes').innerHTML=out.length?'<ul>'+out.join('')+'</ul>':'<p class="empty">No results found.</p>';
+}
+ACT['open-line']=b=>{ openExercise(+b.dataset.i,+b.dataset.line); };
+
+document.addEventListener('contextmenu',ev=>{
+  const g=ev.target.closest('.gut'); if(!g) return;
+  ev.preventDefault();
+  const n=+g.dataset.bp, s=st();
+  if(s.bps.indexOf(n)<0) s.bps.push(n);
+  S.editBp=n; S.cursor=n; S.view='debug'; S.sideOpen=true;
+  renderView(); renderEditor(false); renderDebug();
+  const i=$('bpCondIn'); if(i) i.focus();
+});
+document.addEventListener('keydown',ev=>{
+  const k=ev.key;
+  if(k==='Enter'&&ev.target.id==='fixIn'){ ev.preventDefault(); ACT['fix-typed'](); return; }
+  if(k==='Enter'&&ev.target.id==='bpCondIn'){ ev.preventDefault(); const b=document.querySelector('[data-act=save-cond]'); if(b) b.click(); return; }
+  if(['F5','F6','F9','F10','F11'].indexOf(k)<0) return;
+  ev.preventDefault();
+  if(S.tab!=='code'){ if(k==='F5'&&!ev.shiftKey) toast('Open an exercise file to start debugging.'); return; }
+  if(k==='F5'){
+    if(ev.ctrlKey&&ev.shiftKey) ACT.restart();
+    else if(ev.shiftKey) ACT.stop();
+    else if(!dbg.running) ACT.cont();
+  }
+  else if(k==='F6'){ if(dbg.running) ACT.cont(); }
+  else if(k==='F9') toggleBp(S.cursor);
+  else if(!dbg.active) startDebug();
+  else if(k==='F10') advance('over');
+  else if(k==='F11') advance(ev.shiftKey?'out':'into');
+});
+window.addEventListener('resize',()=>{ if(window.innerWidth<=1150&&S.sideOpen&&!$('sidebar').contains(document.activeElement)){ S.sideOpen=false; renderView(); } });
+
+/* expose a small handle for testing */
+window.__lab={EX:EX,S:S,dbg:dbg,st:st,ACT:ACT,evalWatch:evalWatch,fmt:fmt};
+
+renderAll(false);
+})();
+</script>
+</body>
+</html>
